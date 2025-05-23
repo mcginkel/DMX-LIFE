@@ -1,0 +1,112 @@
+# DMX Life Application Design Prompt
+
+## Overview
+Create a Python web application called "DMX Life" for controlling DMX-enabled lights over a network using the Art-Net protocol. The application should provide a simple user interface for creating, managing, and activating lighting scenes.
+
+## Core Requirements
+
+1. **Architecture & Framework**
+   - Use Flask as the web framework
+   - Implement a responsive web interface that works on both desktop and mobile devices
+   - Use StupidArtnet library for DMX over network communication
+   - Store configuration in JSON files for persistence
+
+2. **Interface Requirements**
+   - Create a clean, simple interface that non-technical users can operate
+   - Implement two main modes: Scene Selection mode and Setup mode
+   - Limit the application to handle a maximum of 10 scenes
+   - Provide visual feedback of the currently active scene
+
+3. **DMX Control Features**
+   - Support Art-Net protocol for sending DMX data over network
+   - Allow configuration of Art-Net network parameters (IP address, universe, etc.)
+   - Support mapping fixtures to specific DMX channels
+   - Provide real-time DMX signal output when scenes are activated
+
+## Specific Features to Implement
+
+### 1. Scene Selection Interface
+   - Create a grid of clickable scene buttons (max 10)
+   - Highlight the currently active scene
+   - Provide immediate activation when a scene is selected
+   - Include a simple header with navigation to Setup mode
+
+### 2. Setup Mode with Three Sections:
+
+   **a. Network Setup:**
+   - Form for Art-Net IP address configuration (default: 255.255.255.255 for broadcast)
+   - Universe selection (0-15)
+   - Port configuration (default: 6454)
+   - Refresh rate setting (default: 30fps)
+
+   **b. Fixture Setup:**
+   - Interface to add/edit/delete DMX fixtures
+   - Fields for fixture name, type, and starting DMX channel
+   - Support for common fixture types (Generic, RGB, RGBW, Moving Head)
+   - Visual DMX channel map showing which channels are used
+   - Warning for channel conflicts between fixtures
+
+   **c. Scene Editor:**
+   - Interface to create and name scenes
+   - Channel sliders for each fixture to set DMX values (0-255)
+   - Preview/test functionality to see the effect before saving
+   - Save and delete buttons for scene management
+   - Counter showing current number of scenes out of maximum 10
+
+### 3. Backend Implementation:
+
+   - **DMX Controller Module:**
+     - Implement a background thread for continuous DMX signal output
+     - Functions to activate scenes, save configurations, and control fixtures
+     - Error handling for network and configuration issues
+
+   - **Configuration Management:**
+     - JSON-based storage for application settings, fixtures, and scenes
+     - Functions to load/save configuration changes
+
+   - **Model Structure:**
+     - Define classes for fixtures, fixture types, and scenes
+     - Implement channel mapping and validation logic
+
+## Technical Specifications
+
+1. **Project Structure:**
+   - Organize as a proper Flask application with blueprints for different sections
+   - Separate models, views, and controllers
+   - Include static folders for CSS, JavaScript, and images
+
+2. **User Interface Design:**
+   - Use a simple, clean, and modern design
+   - Implement responsive layouts that work on various screen sizes
+   - Use intuitive controls and visual feedback
+
+3. **Code Requirements:**
+   - Follow Python best practices and PEP 8 style guide
+   - Implement error handling and logging
+   - Add appropriate comments and documentation
+   - Create a startup script for easy launching
+
+## Deliverables
+
+1. Complete Flask application with:
+   - Main scene selection interface
+   - Setup interfaces (Network, Fixtures, Scenes)
+   - DMX control backend using StupidArtnet
+   - Configuration storage and management
+
+2. Project documentation:
+   - README.md with setup and usage instructions
+   - Requirements.txt for dependency management
+   - Code comments explaining key functionality
+
+## Additional Information
+
+- DMX (Digital Multiplex) is a standard for digital communication used to control lighting equipment
+- Art-Net is a protocol for transmitting DMX over Ethernet/WiFi
+- DMX channels range from 1-512 per universe, with each channel controlling a specific function
+- Different fixture types use different numbers of channels (e.g., RGB = 3 channels, RGBW = 4 channels)
+- Scenes are collections of DMX channel values that create specific lighting effects
+
+## Implementation Approach
+
+First, set up the Flask application structure and create the basic UI templates. Then implement the DMX controller using StupidArtnet. Finally, connect the UI to the backend controller and implement the configuration management.

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMX Life - Scene Setup</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>DMX Life</h1>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('main.index') }}">Scenes</a></li>
+                <li><a href="{{ url_for('setup.index') }}" class="active">Setup</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="setup-container">
+            <h2>Scene Setup</h2>
+            
+            <div class="setup-nav">
+                <a href="{{ url_for('setup.index') }}" class="back-link">← Back to Setup</a>
+            </div>
+            
+            <div class="scenes-container">
+                <div class="scene-list">
+                    <h3>Available Scenes <span id="scene-counter">(0/{{ config.MAX_SCENES }})</span></h3>
+                    <div id="scene-list">
+                        <!-- Scene list will be loaded here -->
+                    </div>
+                    
+                    <button id="add-scene" class="btn-primary">Create New Scene</button>
+                </div>
+                
+                <div class="scene-editor">
+                    <h3>Scene Editor</h3>
+                    <form id="scene-form" class="setup-form">
+                        <div class="form-group">
+                            <label for="scene-name">Scene Name:</label>
+                            <input type="text" id="scene-name" name="name" placeholder="My Scene">
+                        </div>
+                        
+                        <div id="fixture-controls">
+                            <!-- Fixture controls will be loaded here -->
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Save Scene</button>
+                            <button type="button" id="delete-scene" class="btn-danger">Delete Scene</button>
+                            <button type="button" id="test-scene" class="btn-secondary">Test Scene</button>
+                            <button type="button" id="cancel-edit" class="btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>DMX Life Controller &copy; {{ current_year }}</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/scenes.js') }}"></script>
+</body>
+</html>

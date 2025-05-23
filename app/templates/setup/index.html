@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMX Life - Setup</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>DMX Life</h1>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('main.index') }}">Scenes</a></li>
+                <li><a href="{{ url_for('setup.index') }}" class="active">Setup</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="setup-container">
+            <h2>Setup</h2>
+            
+            <div class="setup-grid">
+                <div class="setup-card">
+                    <h3>Network Settings</h3>
+                    <p>Configure Art-Net network settings like IP address and universe.</p>
+                    <a href="{{ url_for('setup.network') }}" class="setup-link">Network Setup</a>
+                </div>
+                
+                <div class="setup-card">
+                    <h3>Fixtures</h3>
+                    <p>Configure DMX fixtures, channels, and addresses.</p>
+                    <a href="{{ url_for('setup.fixtures') }}" class="setup-link">Fixture Setup</a>
+                </div>
+                
+                <div class="setup-card">
+                    <h3>Scenes</h3>
+                    <p>Create and edit lighting scenes.</p>
+                    <a href="{{ url_for('setup.scenes') }}" class="setup-link">Scene Setup</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>DMX Life Controller &copy; {{ current_year }}</p>
+    </footer>
+</body>
+</html>

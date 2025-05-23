@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMX Life - Network Setup</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>DMX Life</h1>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('main.index') }}">Scenes</a></li>
+                <li><a href="{{ url_for('setup.index') }}" class="active">Setup</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="setup-container">
+            <h2>Art-Net Network Setup</h2>
+            
+            <div class="setup-nav">
+                <a href="{{ url_for('setup.index') }}" class="back-link">← Back to Setup</a>
+            </div>
+            
+            <form id="network-form" class="setup-form">
+                <div class="form-group">
+                    <label for="artnet-ip">Art-Net IP Address:</label>
+                    <input type="text" id="artnet-ip" name="artnet_ip" value="{{ config.artnet_ip }}" placeholder="255.255.255.255">
+                    <p class="help-text">Use 255.255.255.255 for broadcast, or a specific IP for unicast</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="artnet-port">Art-Net Port:</label>
+                    <input type="number" id="artnet-port" name="artnet_port" value="{{ config.artnet_port }}" placeholder="6454">
+                    <p class="help-text">Default Art-Net port is 6454</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="artnet-universe">Universe:</label>
+                    <input type="number" id="artnet-universe" name="universe" value="{{ config.universe }}" min="0" max="15">
+                    <p class="help-text">Art-Net universe (0-15)</p>
+                </div>
+                
+                <div class="form-group">
+                    <label for="refresh-rate">Refresh Rate:</label>
+                    <input type="number" id="refresh-rate" name="refresh_rate" value="{{ config.refresh_rate }}" min="1" max="44">
+                    <p class="help-text">Frames per second (1-44, recommended: 30)</p>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn-primary">Save Network Settings</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <footer>
+        <p>DMX Life Controller &copy; {{ current_year }}</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/network.js') }}"></script>
+</body>
+</html>

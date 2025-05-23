@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMX Life - Fixture Setup</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>DMX Life</h1>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('main.index') }}">Scenes</a></li>
+                <li><a href="{{ url_for('setup.index') }}" class="active">Setup</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="setup-container">
+            <h2>DMX Fixture Setup</h2>
+            
+            <div class="setup-nav">
+                <a href="{{ url_for('setup.index') }}" class="back-link">← Back to Setup</a>
+            </div>
+            
+            <div class="fixtures-container">
+                <div class="fixture-list">
+                    <h3>Current Fixtures</h3>
+                    <div id="fixture-list">
+                        <!-- Fixture list will be loaded here -->
+                    </div>
+                    
+                    <button id="add-fixture" class="btn-primary">Add New Fixture</button>
+                </div>
+                
+                <div class="fixture-editor">
+                    <h3>Fixture Editor</h3>
+                    <form id="fixture-form" class="setup-form">
+                        <input type="hidden" id="fixture-index" value="-1">
+                        
+                        <div class="form-group">
+                            <label for="fixture-name">Fixture Name:</label>
+                            <input type="text" id="fixture-name" name="name" placeholder="PAR Can 1">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fixture-type">Fixture Type:</label>
+                            <select id="fixture-type" name="type">
+                                {% for type in fixture_types %}
+                                <option value="{{ type }}">{{ type }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="fixture-channel">Starting DMX Channel:</label>
+                            <input type="number" id="fixture-channel" name="start_channel" min="1" max="512" value="1">
+                        </div>
+                        
+                        <div class="form-group fixture-channels">
+                            <h4>Channels</h4>
+                            <div id="channel-list">
+                                <!-- Channel list will be populated based on fixture type -->
+                            </div>
+                        </div>
+                        
+                        <div class="form-actions">
+                            <button type="submit" class="btn-primary">Save Fixture</button>
+                            <button type="button" id="delete-fixture" class="btn-danger">Delete Fixture</button>
+                            <button type="button" id="cancel-edit" class="btn-secondary">Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="dmx-map">
+                <h3>DMX Channel Map</h3>
+                <div class="dmx-map-container" id="dmx-map">
+                    <!-- DMX map will be rendered here -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>DMX Life Controller &copy; {{ current_year }}</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/fixtures.js') }}"></script>
+</body>
+</html>

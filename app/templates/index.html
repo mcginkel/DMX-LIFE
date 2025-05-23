@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DMX Life - Lighting Control</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>DMX Life</h1>
+        <nav>
+            <ul>
+                <li><a href="{{ url_for('main.index') }}" class="active">Scenes</a></li>
+                <li><a href="{{ url_for('setup.index') }}">Setup</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <div class="scene-container">
+            <h2>Light Scenes</h2>
+            
+            <div class="scene-grid">
+                {% if scenes %}
+                    {% for scene in scenes %}
+                    <div class="scene-button {% if scene == active_scene %}active{% endif %}" data-scene="{{ scene }}">
+                        <div class="scene-name">{{ scene }}</div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="no-scenes">No scenes configured yet. Go to <a href="{{ url_for('setup.scenes') }}">Scene Setup</a> to create scenes.</p>
+                {% endif %}
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>DMX Life Controller &copy; {{ current_year }}</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
