@@ -2,7 +2,7 @@
 Setup views for DMX configuration
 """
 from flask import Blueprint, render_template, jsonify, request, current_app
-from app.dmx_controller import get_config, save_config, save_scene, delete_scene
+from app.dmx_controller import get_config, save_config, save_scene, delete_scene, test_scene
 from app.models.fixture import FixtureType
 
 setup_bp = Blueprint('setup', __name__)
@@ -100,6 +100,21 @@ def delete_scene_endpoint():
         return jsonify({'success': True})
     
     return jsonify({'success': False, 'message': 'Failed to delete scene'}), 500
+
+
+@setup_bp.route('/api/config/scenes/test', methods=['POST'])
+def test_scene_endpoint():
+    """test a scene"""
+    data = request.json
+    if 'channels' not in data:
+        return jsonify({'success': False, 'message': 'Channels required'}), 400
+    
+    success = test_scene(data['channels'])
+    if success:
+        return jsonify({'success': True})
+    
+    
+    return jsonify({'success': False, 'message': 'Failed to save scene'}), 500
 
 @setup_bp.route('/api/fixture-types')
 def get_fixture_types():

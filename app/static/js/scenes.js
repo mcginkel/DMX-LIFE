@@ -107,6 +107,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         renderFixtureControls(scene.channels);
+        testScene();
+
     }
     
     function renderFixtureControls(channelValues = []) {
@@ -179,6 +181,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update value display when slider changes
         channelInput.addEventListener('input', function() {
             valueDisplay.textContent = this.value;
+            testScene();
         });
         
         channelContainer.appendChild(channelLabel);
@@ -308,6 +311,40 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function testScene() {
+
+        // Collect channel values from form
+        const channels = [];
+        const sliders = fixtureControls.querySelectorAll('input[type="range"]');
+        
+        // Initialize all channels to 0
+        for (let i = 0; i < 512; i++) {
+            channels[i] = 0;
+        }
+        
+        // Set channel values from sliders
+        sliders.forEach(slider => {
+            const dmxIndex = parseInt(slider.getAttribute('data-dmx-index'));
+            channels[dmxIndex] = parseInt(slider.value);
+        });
+                
+        // Test scene
+        fetch('/setup/api/config/scenes/test', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                channels: channels
+            })
+        })
+        .then(response => response.json())
+        .catch(error => {
+            console.error('Error testing scene:', error);
+            alert('Error testing scene. See console for details.');
+        });
+    }
+
+    function testSceneOld() {
         const sceneName = sceneNameInput.value;
         
         // Validate scene name

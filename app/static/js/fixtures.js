@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function() {
         channelList.innerHTML = '';
         
         channels.forEach((channel, index) => {
-            if (!channel.visible) return
+            // if (!channel.visible) return
             const channelEl = document.createElement('div');
             channelEl.className = 'channel-item';
             

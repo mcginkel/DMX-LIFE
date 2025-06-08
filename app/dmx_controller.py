@@ -229,6 +229,20 @@ def delete_scene(name):
         current_app.logger.error(f"Error deleting scene: {e}")
         return False
 
+def test_scene(channels):
+    if dmx_controller is None:
+        current_app.logger.error("DMX controller not initialized")
+        return False
+        
+    # Convert scene data to byte array for DMX
+    buffer = bytearray(512)
+    for channel, value in enumerate(channels):
+        if 0 <= channel < 512:
+            buffer[channel] = value
+    
+    dmx_controller.set(buffer)
+
+    return True
 
 def save_config(config_data):
     """Save configuration settings"""
