@@ -38,6 +38,12 @@
                 <div class="scene-editor">
                     <h3>Scene Editor</h3>
                     <form id="scene-form" class="setup-form">
+                         <div class="form-actions">
+                            <button type="submit" class="btn-primary">Save Scene</button>
+                            <button type="button" id="delete-scene" class="btn-danger">Delete Scene</button>
+                            <button type="button" id="test-scene" class="btn-secondary">Test Scene</button>
+                            <button type="button" id="cancel-edit" class="btn-secondary">Cancel</button>
+                        </div>
                         <div class="form-group">
                             <label for="scene-name">Scene Name:</label>
                             <input type="text" id="scene-name" name="name" placeholder="My Scene">
@@ -47,12 +53,7 @@
                             <!-- Fixture controls will be loaded here -->
                         </div>
                         
-                        <div class="form-actions">
-                            <button type="submit" class="btn-primary">Save Scene</button>
-                            <button type="button" id="delete-scene" class="btn-danger">Delete Scene</button>
-                            <button type="button" id="test-scene" class="btn-secondary">Test Scene</button>
-                            <button type="button" id="cancel-edit" class="btn-secondary">Cancel</button>
-                        </div>
+
                     </form>
                 </div>
             </div>

@@ -2,6 +2,9 @@
 Models for DMX fixtures and scenes
 """
 
+from flask.cli import F
+
+
 class Fixture:
     """Represents a DMX fixture"""
     
@@ -38,40 +41,49 @@ class FixtureType:
     TYPES = {
         'Generic': {
             'channels': [
-                {'name': 'Dimmer', 'default': 0}
+                {'name': 'Dimmer', 'default': 0, 'visible': True}
             ]
         },
         'RGB': {
             'channels': [
-                {'name': 'Red', 'default': 0},
-                {'name': 'Green', 'default': 0},
-                {'name': 'Blue', 'default': 0}
+                {'name': 'Red', 'default': 0, 'visible': True},
+                {'name': 'Green', 'default': 0, 'visible': True},
+                {'name': 'Blue', 'default': 0, 'visible': True}
             ]
         },
         'RGBW': {
             'channels': [
-                {'name': 'Red', 'default': 0},
-                {'name': 'Green', 'default': 0},
-                {'name': 'Blue', 'default': 0},
-                {'name': 'White', 'default': 0}
+                {'name': 'Red', 'default': 0, 'visible': True},
+                {'name': 'Green', 'default': 0, 'visible': True},
+                {'name': 'Blue', 'default': 0, 'visible': True},
+                {'name': 'White', 'default': 0, 'visible': True}
             ]
         },
-        'Moving Head': {
+        'LEDPAR56': {
             'channels': [
-                {'name': 'Pan', 'default': 128},
-                {'name': 'Tilt', 'default': 128},
-                {'name': 'Pan Fine', 'default': 0},
-                {'name': 'Tilt Fine', 'default': 0},
-                {'name': 'Speed', 'default': 0},
-                {'name': 'Dimmer', 'default': 0},
-                {'name': 'Red', 'default': 0},
-                {'name': 'Green', 'default': 0},
-                {'name': 'Blue', 'default': 0},
-                {'name': 'White', 'default': 0},
-                {'name': 'Gobo', 'default': 0},
-                {'name': 'Gobo Rotation', 'default': 0},
-                {'name': 'Color', 'default': 0},
-                {'name': 'Prism', 'default': 0}
+                {'name': 'Red', 'default': 0, 'visible': True},
+                {'name': 'Green', 'default': 0, 'visible': True},
+                {'name': 'Blue', 'default': 0, 'visible': True},
+                {'name': 'Extra', 'default': 0, 'visible': True},
+                {'name': 'Extra2', 'default': 0, 'visible': True}
+            ]
+        },
+        'MovingHead': {
+            'channels': [
+                {'name': 'Pan', 'default': 128, 'visible': True},
+                {'name': 'Tilt', 'default': 128, 'visible': True},
+                {'name': 'Pan Fine', 'default': 0, 'visible': True},
+                {'name': 'Tilt Fine', 'default': 0, 'visible': True},
+                {'name': 'Speed', 'default': 0, 'visible': False},
+                {'name': 'Dimmer', 'default': 0, 'visible': True},
+                {'name': 'Red', 'default': 0, 'visible': True},
+                {'name': 'Green', 'default': 0, 'visible': True},
+                {'name': 'Blue', 'default': 0, 'visible': True},
+                {'name': 'White', 'default': 0, 'visible': True},
+                {'name': 'Gobo', 'default': 0, 'visible': False},
+                {'name': 'Gobo Rotation', 'default': 0, 'visible': True},
+                {'name': 'Color', 'default': 0, 'visible': True},
+                {'name': 'Prism', 'default': 0, 'visible': True}
             ]
         }
     }

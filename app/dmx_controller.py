@@ -45,7 +45,7 @@ def init_dmx_controller(app):
     
     @app.teardown_appcontext
     def teardown_dmx(exception=None):
-        stop_dmx_thread()
+        pass #stop_dmx_thread()
 
 def load_configuration():
     """Load DMX configuration from file"""
@@ -62,6 +62,10 @@ def load_configuration():
             config.get('packet_size', 512),
             config.get('refresh_rate', 30)
         )
+        # TODO : do we need this?
+        dmx_controller.set_simplified(False)
+        dmx_controller.set_net(0)
+        dmx_controller.set_subnet(0)
         
         # Load scenes
         scenes = {scene['name']: scene['channels'] for scene in config.get('scenes', [])}
@@ -118,7 +122,7 @@ def activate_scene(scene_name):
     if scene_name not in scenes:
         current_app.logger.error(f"Scene '{scene_name}' not found")
         return False
-    
+    current_app.logger.info(f"Scene '{scene_name}' activated")
     if dmx_controller is None:
         current_app.logger.error("DMX controller not initialized")
         return False
@@ -134,6 +138,7 @@ def activate_scene(scene_name):
                 buffer[channel] = value
         
         dmx_controller.set(buffer)
+        
         active_scene = scene_name
         return True
     except Exception as e:
@@ -191,6 +196,39 @@ def save_scene(name, channel_values):
     except Exception as e:
         current_app.logger.error(f"Error saving scene: {e}")
         return False
+
+def delete_scene(name):
+    """Delete a scene"""
+    global scenes
+    
+    if not name:
+        return False
+    
+    if name not in scenes:
+        return False
+    
+    # Update the scene
+    scenes.pop(name)
+    
+    # Update config file
+    try:
+        with open(current_app.config['CONFIG_FILE'], 'r') as f:
+            config = json.load(f)
+        
+        # Update or add scene
+        scene_list = config.get('scenes', [])
+        scene_list = [scene for scene in scene_list if scene['name'] != name]
+  
+        config['scenes'] = scene_list
+        
+        with open(current_app.config['CONFIG_FILE'], 'w') as f:
+            json.dump(config, f, indent=4)
+        
+        return True
+    except Exception as e:
+        current_app.logger.error(f"Error deleting scene: {e}")
+        return False
+
 
 def save_config(config_data):
     """Save configuration settings"""

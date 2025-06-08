@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
         channelInput.value = value;
         channelInput.id = `channel-${dmxIndex}`;
         channelInput.setAttribute('data-dmx-index', dmxIndex);
-        
+         
         // Value display
         const valueDisplay = document.createElement('span');
         valueDisplay.className = 'value';
@@ -287,13 +287,12 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Update scenes list on server
         fetch('/setup/api/config/scenes', {
-            method: 'POST',
+            method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                name: "DELETE_" + editingSceneName,
-                channels: []
+                name: editingSceneName
             })
         })
         .then(response => response.json())

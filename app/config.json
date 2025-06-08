@@ -1,28 +1,34 @@
 {
-    "artnet_ip": "255.255.255.255",
+    "artnet_ip": "192.168.3.170",
     "artnet_port": 6454,
-    "universe": 0,
+    "universe": 1,
     "packet_size": 512,
     "refresh_rate": 30,
     "fixtures": [
         {
-            "name": "Par 1",
-            "type": "RGB",
+            "name": "P1",
+            "type": "LEDPAR56",
             "start_channel": 1,
-            "channel_count": 3
+            "channel_count": 5
+        },
+        {
+            "name": "P2",
+            "type": "LEDPAR56",
+            "start_channel": 6,
+            "channel_count": 5
         }
     ],
     "scenes": [
         {
             "name": "Alles Aan",
             "channels": [
+                0,
+                0,
                 255,
-                255,
-                255,
                 0,
                 0,
                 0,
-                0,
+                184,
                 0,
                 0,
                 0,
