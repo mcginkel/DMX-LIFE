@@ -51,41 +51,41 @@ class FixtureType:
                 {'name': 'Blue', 'default': 0, 'visible': True}
             ]
         },
-        'RGBW': {
+        'ShowTec LEDPAR 56': {
             'channels': [
                 {'name': 'Red', 'default': 0, 'visible': True},
                 {'name': 'Green', 'default': 0, 'visible': True},
                 {'name': 'Blue', 'default': 0, 'visible': True},
-                {'name': 'White', 'default': 0, 'visible': True}
+                {'name': 'Full Color', 'default': 0, 'visible': False},
+                {'name': 'Strobe en Speed', 'default': 0, 'visible': False},
+                {'name': 'Modi', 'default': 0, 'visible': False}
             ]
         },
-        'LEDPAR56': {
+        'Performer 2000 - 13ch tour': {
             'channels': [
-                {'name': 'Red', 'default': 0, 'visible': True},
-                {'name': 'Green', 'default': 0, 'visible': True},
-                {'name': 'Blue', 'default': 0, 'visible': True},
-                {'name': 'Extra', 'default': 0, 'visible': True},
-                {'name': 'Extra2', 'default': 0, 'visible': True}
+                {'name': 'dimmer', 'default': 0, 'visible': True},
+                {'name': 'Rood', 'default': 0, 'visible': True},
+                {'name': 'Groen', 'default': 0, 'visible': True},
+                {'name': 'Blauw', 'default': 0, 'visible': True},
+                {'name': 'Amber', 'default': 0, 'visible': True},
+                {'name': 'Limoen', 'default': 0, 'visible': True},
+                {'name': 'Kleurvoorinstelling', 'default': 0, 'visible': True},
+                {'name': 'Macro', 'default': 0, 'visible': False},
+                {'name': 'Stroboscoop', 'default': 0, 'visible': False},
+                {'name': 'Zoom kl->gr', 'default': 0, 'visible': True},
+                {'name': 'Programma', 'default': 0, 'visible': False},
+                {'name': 'Programmasnelheid', 'default': 0, 'visible': False},
+                {'name': 'Dimmersnelheid', 'default': 0, 'visible': False}
             ]
         },
-        'MovingHead': {
+        'Compac Par 18 Tri': {
             'channels': [
-                {'name': 'Pan', 'default': 128, 'visible': True},
-                {'name': 'Tilt', 'default': 128, 'visible': True},
-                {'name': 'Pan Fine', 'default': 0, 'visible': True},
-                {'name': 'Tilt Fine', 'default': 0, 'visible': True},
-                {'name': 'Speed', 'default': 0, 'visible': False},
                 {'name': 'Dimmer', 'default': 0, 'visible': True},
-                {'name': 'Red', 'default': 0, 'visible': True},
-                {'name': 'Green', 'default': 0, 'visible': True},
-                {'name': 'Blue', 'default': 0, 'visible': True},
-                {'name': 'White', 'default': 0, 'visible': True},
-                {'name': 'Gobo', 'default': 0, 'visible': False},
-                {'name': 'Gobo Rotation', 'default': 0, 'visible': True},
-                {'name': 'Color', 'default': 0, 'visible': True},
-                {'name': 'Prism', 'default': 0, 'visible': True}
+                {'name': 'Rood', 'default': 0, 'visible': True},
+                {'name': 'Groen', 'default': 0, 'visible': True},
+                {'name': 'Blauw', 'default': 0, 'visible': True}
             ]
-        }
+        },
     }
     
     @classmethod
