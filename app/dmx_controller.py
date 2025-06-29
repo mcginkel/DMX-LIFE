@@ -15,6 +15,13 @@ dmx_running = False
 active_scene = None
 scenes = {}
 
+# Variables for smooth transitions
+current_dmx_values = bytearray(512)  # Current DMX values
+target_dmx_values = bytearray(512)   # Target DMX values
+transition_active = False            # Whether a transition is in progress
+transition_start_time = 0            # When the transition started
+TRANSITION_DURATION = 2.0            # Transition duration in seconds
+
 def init_dmx_controller(app):
     """Initialize the DMX controller with application context"""
     
@@ -103,7 +110,8 @@ def stop_dmx_thread():
 
 def dmx_thread_function():
     """Function that runs in the DMX thread"""
-    global dmx_running, dmx_controller, active_scene
+    global dmx_running, dmx_controller, active_scene, transition_active
+    global current_dmx_values, target_dmx_values, transition_start_time
     
     if dmx_controller is None:
         return
@@ -111,9 +119,30 @@ def dmx_thread_function():
     dmx_controller.start()
     
     while dmx_running:
-        time.sleep(0.1)  # Small sleep to prevent CPU hogging
+        time.sleep(0.033)  # ~30fps update rate
         
-        # DMX controller handles sending automatically once started
+        # Handle smooth transitions if active
+        if transition_active:
+            # Calculate progress (0.0 to 1.0)
+            elapsed = time.time() - transition_start_time
+            progress = min(elapsed / TRANSITION_DURATION, 1.0)
+            
+            # Update all DMX channels with interpolated values
+            for i in range(512):
+                if current_dmx_values[i] != target_dmx_values[i]:
+                    # Linear interpolation between current and target values
+                    current_value = current_dmx_values[i]
+                    target_value = target_dmx_values[i]
+                    interpolated = int(current_value + (target_value - current_value) * progress)
+                    current_dmx_values[i] = interpolated
+            
+            # Apply updated values to DMX controller
+            dmx_controller.set(current_dmx_values)
+            
+            # Check if transition is complete
+            if progress >= 1.0:
+                transition_active = False
+                current_dmx_values = bytearray(target_dmx_values)  # Ensure final values match targets exactly
 
 def activate_scene(scene_name):
     """Activate a lighting scene"""
@@ -177,8 +206,15 @@ def activate_scene(scene_name):
                     if 0 <= channel < 512 and channel < len(channel_values) and channel_values[channel]:
                         buffer[channel] = channel_values[channel]
         
-        # Send to DMX controller
-        dmx_controller.set(buffer)
+        # Set up smooth transition to new scene
+        global transition_active, transition_start_time, target_dmx_values
+        
+        # Store target values
+        target_dmx_values = buffer
+        
+        # Start transition
+        transition_active = True
+        transition_start_time = time.time()
         
         active_scene = scene_name
         return True

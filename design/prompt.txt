@@ -23,6 +23,8 @@ Create a Python web application called "DMX Life" for controlling DMX-enabled li
    - Support mapping fixtures to specific DMX channels
    - Provide real-time DMX signal output when scenes are activated
    - Enable selective activation of fixtures within scenes
+   - Implement smooth transitions between scenes over a 2-second period
+   - Ensure test mode provides immediate feedback without transitions
 
 ## Specific Features to Implement
 
@@ -62,6 +64,8 @@ Create a Python web application called "DMX Life" for controlling DMX-enabled li
      - Implement a background thread for continuous DMX signal output
      - Functions to activate scenes, save configurations, and control fixtures
      - Selective fixture activation based on scene configuration
+     - Smooth transitions between scene changes over 2 seconds using linear interpolation
+     - Direct immediate output for test functionality without transitions
      - Error handling for network and configuration issues
 
    - **Configuration Management:**
