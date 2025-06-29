@@ -642,6 +642,28 @@
                 0,
                 0,
                 0
+            ],
+            "enabledFixtures": [
+                "P1",
+                "P2",
+                "Perf2",
+                "Perf3",
+                "Perf4",
+                "Perf5",
+                "Perf6",
+                "Par1",
+                "Par2",
+                "Par3",
+                "Par4",
+                "Par5",
+                "Par6",
+                "Par7",
+                "Par8",
+                "Tribar1",
+                "Tribar2",
+                "Tribar3",
+                "Tribar4",
+                "Sfeer"
             ]
         },
         {
@@ -1159,6 +1181,28 @@
                 0,
                 0,
                 0
+            ],
+            "enabledFixtures": [
+                "P1",
+                "P2",
+                "Perf2",
+                "Perf3",
+                "Perf4",
+                "Perf5",
+                "Perf6",
+                "Par1",
+                "Par2",
+                "Par3",
+                "Par4",
+                "Par5",
+                "Par6",
+                "Par7",
+                "Par8",
+                "Tribar1",
+                "Tribar2",
+                "Tribar3",
+                "Tribar4",
+                "Sfeer"
             ]
         },
         {

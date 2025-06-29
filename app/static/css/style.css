@@ -422,9 +422,9 @@ footer {
 }
 
 .fixture-control h4 {
-    margin-bottom: 10px;
-    border-bottom: 1px solid var(--border-color);
-    padding-bottom: 5px;
+    margin: 0;
+    padding: 0;
+    border-bottom: none;
 }
 
 .channel-control {
@@ -446,6 +446,38 @@ footer {
     width: 40px;
     text-align: center;
     margin-left: 10px;
+}
+
+/* Fixture enable/disable styles */
+.fixture-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 5px;
+}
+
+.fixture-header h4 {
+    margin: 0;
+    padding: 0;
+}
+
+.fixture-enable-label {
+    display: flex;
+    align-items: center;
+    font-size: 0.9em;
+    cursor: pointer;
+    user-select: none;
+}
+
+.fixture-enable {
+    margin-right: 5px;
+    cursor: pointer;
+}
+
+.channel-controls {
+    transition: opacity 0.2s ease-in-out;
 }
 
 /* Responsive */

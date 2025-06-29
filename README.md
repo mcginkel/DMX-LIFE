@@ -4,6 +4,7 @@ DMX Life is a simple web-based application for controlling DMX lighting fixtures
 
 - Define DMX fixtures and their channel assignments
 - Create up to 10 lighting scenes
+- Selectively enable/disable fixtures in each scene
 - Quickly switch between scenes with a simple interface
 
 ## Features
@@ -11,8 +12,9 @@ DMX Life is a simple web-based application for controlling DMX lighting fixtures
 - **Simple Web Interface**: Control your lighting from any device with a browser
 - **Art-Net Protocol**: Industry standard for DMX over Ethernet/WiFi
 - **Fixture Setup**: Configure different types of DMX fixtures (RGB, RGBW, Moving Heads, etc.)
-- **Scene Designer**: Create and save lighting scenes
+- **Scene Designer**: Create and save lighting scenes with selective fixture control
 - **Visual DMX Mapping**: See which DMX channels are assigned to which fixtures
+- **Fixture Selection**: Choose which fixtures participate in each scene
 
 ## Installation
 
@@ -68,7 +70,8 @@ Create lighting scenes:
 - Go to "Setup" -> "Scene Setup"
 - Click "Create New Scene"
 - Enter a scene name
-- Adjust the sliders for each fixture's channels
+- Enable or disable fixtures you want to include in this scene
+- Adjust the sliders for each enabled fixture's channels
 - Click "Test Scene" to preview
 - Click "Save Scene" when finished
 
@@ -77,6 +80,7 @@ Create lighting scenes:
 Finally, use the main interface to activate your scenes:
 - Go to "Scenes" page
 - Click on any scene to activate it
+- Only enabled fixtures in that scene will respond
 
 ## System Requirements
 

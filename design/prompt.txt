@@ -1,7 +1,7 @@
 # DMX Life Application Design Prompt
 
 ## Overview
-Create a Python web application called "DMX Life" for controlling DMX-enabled lights over a network using the Art-Net protocol. The application should provide a simple user interface for creating, managing, and activating lighting scenes.
+Create a Python web application called "DMX Life" for controlling DMX-enabled lights over a network using the Art-Net protocol. The application should provide a simple user interface for creating, managing, and activating lighting scenes with selective fixture control.
 
 ## Core Requirements
 
@@ -22,6 +22,7 @@ Create a Python web application called "DMX Life" for controlling DMX-enabled li
    - Allow configuration of Art-Net network parameters (IP address, universe, etc.)
    - Support mapping fixtures to specific DMX channels
    - Provide real-time DMX signal output when scenes are activated
+   - Enable selective activation of fixtures within scenes
 
 ## Specific Features to Implement
 
@@ -48,7 +49,9 @@ Create a Python web application called "DMX Life" for controlling DMX-enabled li
 
    **c. Scene Editor:**
    - Interface to create and name scenes
+   - Enable/disable checkboxes to select which fixtures are active in each scene
    - Channel sliders for each fixture to set DMX values (0-255)
+   - Visual indication of disabled fixtures (grayed out controls)
    - Preview/test functionality to see the effect before saving
    - Save and delete buttons for scene management
    - Counter showing current number of scenes out of maximum 10
@@ -58,15 +61,18 @@ Create a Python web application called "DMX Life" for controlling DMX-enabled li
    - **DMX Controller Module:**
      - Implement a background thread for continuous DMX signal output
      - Functions to activate scenes, save configurations, and control fixtures
+     - Selective fixture activation based on scene configuration
      - Error handling for network and configuration issues
 
    - **Configuration Management:**
      - JSON-based storage for application settings, fixtures, and scenes
+     - Store enabled/disabled fixture state for each scene
      - Functions to load/save configuration changes
 
    - **Model Structure:**
      - Define classes for fixtures, fixture types, and scenes
      - Implement channel mapping and validation logic
+     - Include fixture selection data in scene models
 
 ## Technical Specifications
 
@@ -79,6 +85,7 @@ Create a Python web application called "DMX Life" for controlling DMX-enabled li
    - Use a simple, clean, and modern design
    - Implement responsive layouts that work on various screen sizes
    - Use intuitive controls and visual feedback
+   - Provide clear indication of which fixtures are enabled in each scene
 
 3. **Code Requirements:**
    - Follow Python best practices and PEP 8 style guide
@@ -90,7 +97,7 @@ Create a Python web application called "DMX Life" for controlling DMX-enabled li
 
 1. Complete Flask application with:
    - Main scene selection interface
-   - Setup interfaces (Network, Fixtures, Scenes)
+   - Setup interfaces (Network, Fixtures, Scenes with fixture selection)
    - DMX control backend using StupidArtnet
    - Configuration storage and management
 
@@ -106,7 +113,8 @@ Create a Python web application called "DMX Life" for controlling DMX-enabled li
 - DMX channels range from 1-512 per universe, with each channel controlling a specific function
 - Different fixture types use different numbers of channels (e.g., RGB = 3 channels, RGBW = 4 channels)
 - Scenes are collections of DMX channel values that create specific lighting effects
+- Selective fixture activation allows for more diverse lighting scenes by controlling which fixtures participate in each scene
 
 ## Implementation Approach
 
-First, set up the Flask application structure and create the basic UI templates. Then implement the DMX controller using StupidArtnet. Finally, connect the UI to the backend controller and implement the configuration management.
+First, set up the Flask application structure and create the basic UI templates. Then implement the DMX controller using StupidArtnet. Add fixture management functionality, followed by scene creation with fixture selection capabilities. Finally, connect the UI to the backend controller and implement the configuration management.

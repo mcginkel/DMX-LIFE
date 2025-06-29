@@ -69,12 +69,12 @@ class FixtureType:
                 {'name': 'Blauw', 'default': 0, 'visible': True},
                 {'name': 'Amber', 'default': 0, 'visible': True},
                 {'name': 'Limoen', 'default': 0, 'visible': True},
-                {'name': 'Kleurvoorinstelling', 'default': 0, 'visible': True},
+                {'name': 'Kleur', 'default': 0, 'visible': True},
                 {'name': 'Macro', 'default': 0, 'visible': False},
                 {'name': 'Stroboscoop', 'default': 0, 'visible': False},
                 {'name': 'Zoom kl->gr', 'default': 0, 'visible': True},
                 {'name': 'Programma', 'default': 0, 'visible': False},
-                {'name': 'Programmasnelheid', 'default': 0, 'visible': False},
+                {'name': 'P-Snelheid', 'default': 0, 'visible': False},
                 {'name': 'Dimmersnelheid', 'default': 0, 'visible': False}
             ]
         },

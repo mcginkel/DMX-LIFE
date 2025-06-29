@@ -128,15 +128,56 @@ def activate_scene(scene_name):
         return False
     
     try:
-        # Set DMX values for the scene
+        # Get the scene configuration
+        with open(current_app.config['CONFIG_FILE'], 'r') as f:
+            config = json.load(f)
+        
+        # Find the scene in the config
+        scene_config = next((scene for scene in config.get('scenes', []) 
+                            if scene['name'] == scene_name), None)
+        
+        if not scene_config:
+            current_app.logger.error(f"Scene '{scene_name}' not found in config file")
+            return False
+            
+        # Get DMX values and enabled fixtures
         channel_values = scenes[scene_name]
+        enabled_fixtures = scene_config.get('enabledFixtures', [])
+        
+        # Get fixtures for selective application
+        fixtures = config.get('fixtures', [])
         
         # Convert scene data to byte array for DMX
         buffer = bytearray(512)
-        for channel, value in enumerate(channel_values):
-            if 0 <= channel < 512:
-                buffer[channel] = value
         
+        # First set all channels to 0
+        for i in range(512):
+            buffer[i] = 0
+            
+        # If no specific fixture is enabled, activate all channels
+        if not enabled_fixtures:
+            for channel, value in enumerate(channel_values):
+                if 0 <= channel < 512 and value:
+                    buffer[channel] = value
+        else:
+            # Apply channel values only for enabled fixtures
+            for fixture in fixtures:
+                fixture_name = fixture.get('name', '')
+                
+                # Skip if fixture is not enabled in this scene
+                if fixture_name not in enabled_fixtures:
+                    continue
+                    
+                # Apply channel values for this fixture
+                start_channel = fixture.get('start_channel', 1) - 1  # Convert to 0-based index
+                channel_count = fixture.get('channel_count', 1)
+                
+                for i in range(channel_count):
+                    channel = start_channel + i
+                    if 0 <= channel < 512 and channel < len(channel_values) and channel_values[channel]:
+                        buffer[channel] = channel_values[channel]
+        
+        # Send to DMX controller
         dmx_controller.set(buffer)
         
         active_scene = scene_name
@@ -153,7 +194,7 @@ def get_available_scenes():
     """Get list of available scenes"""
     return list(scenes.keys())
 
-def save_scene(name, channel_values):
+def save_scene(name, channel_values, enabled_fixtures=None):
     """Save a new scene"""
     global scenes
     
@@ -163,7 +204,7 @@ def save_scene(name, channel_values):
     if len(scenes) >= current_app.config['MAX_SCENES'] and name not in scenes:
         return False
     
-    # Update the scene
+    # Update the scene in memory
     scenes[name] = channel_values
     
     # Update config file
@@ -178,14 +219,25 @@ def save_scene(name, channel_values):
         for scene in config.get('scenes', []):
             if scene['name'] == name:
                 scene['channels'] = channel_values
+                # Update enabled fixtures if provided
+                if enabled_fixtures is not None:
+                    scene['enabledFixtures'] = enabled_fixtures
+                # If no enabled fixtures key exists in the scene, add it
+                elif 'enabledFixtures' not in scene:
+                    scene['enabledFixtures'] = []
                 scene_updated = True
             scene_list.append(scene)
         
         if not scene_updated:
-            scene_list.append({
+            scene_data = {
                 'name': name,
                 'channels': channel_values
-            })
+            }
+            # Add enabled fixtures if provided
+            if enabled_fixtures is not None:
+                scene_data['enabledFixtures'] = enabled_fixtures
+            
+            scene_list.append(scene_data)
         
         config['scenes'] = scene_list
         

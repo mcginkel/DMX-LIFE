@@ -75,7 +75,10 @@ def save_scene_endpoint():
     if not data.get('name') or 'channels' not in data:
         return jsonify({'success': False, 'message': 'Scene name and channels required'}), 400
     
-    success = save_scene(data['name'], data['channels'])
+    # Get enabled fixtures (optional)
+    enabled_fixtures = data.get('enabledFixtures', None)
+    
+    success = save_scene(data['name'], data['channels'], enabled_fixtures)
     if success:
         return jsonify({'success': True})
     

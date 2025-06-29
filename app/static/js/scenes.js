@@ -83,7 +83,8 @@ document.addEventListener('DOMContentLoaded', function() {
             activeScene.classList.remove('active');
         }
         
-        renderFixtureControls();
+        // Initialize controls with all fixtures enabled by default for new scenes
+        renderFixtureControls([], fixtures.map(f => f.name));
     }
     
     function editScene(sceneName) {
@@ -106,12 +107,15 @@ document.addEventListener('DOMContentLoaded', function() {
             sceneEl.classList.add('active');
         }
         
-        renderFixtureControls(scene.channels);
+        // Get enabled fixtures (default to all if not specified in the scene)
+        const enabledFixtures = scene.enabledFixtures || [];
+        
+        renderFixtureControls(scene.channels, enabledFixtures);
         testScene();
 
     }
     
-    function renderFixtureControls(channelValues = []) {
+    function renderFixtureControls(channelValues = [], enabledFixtures = []) {
         fixtureControls.innerHTML = '';
         
         if (fixtures.length === 0) {
@@ -123,19 +127,54 @@ document.addEventListener('DOMContentLoaded', function() {
             const fixtureEl = document.createElement('div');
             fixtureEl.className = 'fixture-control';
             
+            // Create header container for fixture name and enable checkbox
+            const fixtureHeaderContainer = document.createElement('div');
+            fixtureHeaderContainer.className = 'fixture-header';
+            
+            // Create fixture enable/disable checkbox
+            const fixtureEnableLabel = document.createElement('label');
+            fixtureEnableLabel.className = 'fixture-enable-label';
+            
+            const fixtureEnableCheckbox = document.createElement('input');
+            fixtureEnableCheckbox.type = 'checkbox';
+            fixtureEnableCheckbox.className = 'fixture-enable';
+            fixtureEnableCheckbox.checked = editingSceneName ? 
+                (enabledFixtures.includes(fixture.name)) : true; // Default enabled for new scenes
+            fixtureEnableCheckbox.setAttribute('data-fixture-name', fixture.name);
+            
+            fixtureEnableLabel.appendChild(fixtureEnableCheckbox);
+            fixtureEnableLabel.appendChild(document.createTextNode(' Enable'));
+            
+            // Fixture name
             const fixtureHeader = document.createElement('h4');
             fixtureHeader.textContent = `${fixture.name} (${fixture.type})`;
-            fixtureEl.appendChild(fixtureHeader);
+            
+            fixtureHeaderContainer.appendChild(fixtureHeader);
+            fixtureHeaderContainer.appendChild(fixtureEnableLabel);
+            fixtureEl.appendChild(fixtureHeaderContainer);
             
             // Create channel controls
+            const channelsContainer = document.createElement('div');
+            channelsContainer.className = 'channel-controls';
+            
+            // Toggle channel controls visibility based on enable state
+            fixtureEnableCheckbox.addEventListener('change', function() {
+                channelsContainer.style.opacity = this.checked ? '1' : '0.5';
+                testScene(); // Update preview
+            });
+            
+            // Set initial state
+            channelsContainer.style.opacity = fixtureEnableCheckbox.checked ? '1' : '0.5';
+            
             for (let i = 0; i < fixture.channel_count; i++) {
                 const channelIndex = fixture.start_channel + i - 1; // 0-based index
                 const channelValue = channelValues[channelIndex] || 0;
                 
                 const channelEl = createChannelControl(fixture, i, channelIndex, channelValue);
-                fixtureEl.appendChild(channelEl);
+                channelsContainer.appendChild(channelEl);
             }
             
+            fixtureEl.appendChild(channelsContainer);
             fixtureControls.appendChild(fixtureEl);
         });
     }
@@ -229,10 +268,20 @@ document.addEventListener('DOMContentLoaded', function() {
             channels[dmxIndex] = parseInt(slider.value);
         });
         
+        // Get enabled fixtures
+        const enabledFixtures = [];
+        const fixtureCheckboxes = fixtureControls.querySelectorAll('.fixture-enable');
+        fixtureCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                enabledFixtures.push(checkbox.getAttribute('data-fixture-name'));
+            }
+        });
+        
         // Create scene data
         const sceneData = {
             name: sceneName,
-            channels: channels
+            channels: channels,
+            enabledFixtures: enabledFixtures
         };
         
         // Send to server
@@ -311,22 +360,44 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function testScene() {
-
         // Collect channel values from form
         const channels = [];
-        const sliders = fixtureControls.querySelectorAll('input[type="range"]');
         
         // Initialize all channels to 0
         for (let i = 0; i < 512; i++) {
             channels[i] = 0;
         }
         
-        // Set channel values from sliders
-        sliders.forEach(slider => {
-            const dmxIndex = parseInt(slider.getAttribute('data-dmx-index'));
-            channels[dmxIndex] = parseInt(slider.value);
+        // Get enabled fixtures
+        const enabledFixtureNames = [];
+        const fixtureCheckboxes = fixtureControls.querySelectorAll('.fixture-enable');
+        fixtureCheckboxes.forEach(checkbox => {
+            if (checkbox.checked) {
+                enabledFixtureNames.push(checkbox.getAttribute('data-fixture-name'));
+            }
         });
-                
+        
+        // Set channel values from sliders, but only for enabled fixtures
+        fixtures.forEach(fixture => {
+            // Skip disabled fixtures
+            if (!enabledFixtureNames.includes(fixture.name)) {
+                return;
+            }
+            
+            // Find the fixture's channel sliders
+            const fixtureEl = Array.from(fixtureControls.querySelectorAll('.fixture-control')).find(el => 
+                el.querySelector('h4').textContent.startsWith(fixture.name)
+            );
+            
+            if (fixtureEl) {
+                const sliders = fixtureEl.querySelectorAll('input[type="range"]');
+                sliders.forEach(slider => {
+                    const dmxIndex = parseInt(slider.getAttribute('data-dmx-index'));
+                    channels[dmxIndex] = parseInt(slider.value);
+                });
+            }
+        });
+        
         // Test scene
         fetch('/setup/api/config/scenes/test', {
             method: 'POST',

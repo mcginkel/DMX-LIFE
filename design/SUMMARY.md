@@ -15,11 +15,15 @@ DMX Life is a Python web application for controlling DMX lighting fixtures over 
    - **Network Setup**: Configure Art-Net parameters (IP, port, universe)
    - **Fixture Setup**: Add and configure DMX fixtures with visual DMX map
    - **Scene Editor**: Create and test lighting scenes with intuitive sliders
+     - Selectively enable/disable fixtures in each scene
+     - Fine-grained DMX channel control with sliders
+     - Real-time scene preview
 
 3. **Flexible Fixture Support**
    - Support for common fixture types (RGB, RGBW, Moving Heads, etc.)
    - Visual indication of DMX channel assignment
    - Detection of channel conflicts
+   - Selective fixture activation per scene
 
 ## Technical Details
 
@@ -43,7 +47,7 @@ DMX Life is a Python web application for controlling DMX lighting fixtures over 
 3. Setup Workflow:
    - First, configure network settings
    - Next, add your DMX fixtures
-   - Finally, create lighting scenes
+   - Finally, create lighting scenes with desired fixture combinations
    - Return to the main page to activate scenes
 
 ## Future Improvements
