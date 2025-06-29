@@ -3,7 +3,7 @@ Main views for the application
 """
 from flask import Blueprint, render_template, jsonify, request, current_app
 from app.dmx_controller import (
-    get_active_scene, get_available_scenes, activate_scene
+    get_active_scene, get_available_scenes, activate_scene, current_dmx_values
 )
 
 main_bp = Blueprint('main', __name__)
@@ -34,3 +34,28 @@ def activate_scene_endpoint():
     if success:
         return jsonify({'success': True, 'active': scene_name})
     return jsonify({'success': False, 'message': 'Failed to activate scene'}), 500
+
+@main_bp.route('/api/dmx/values')
+def dmx_values():
+    """API endpoint to get current DMX channel values"""
+    # Find the highest active channel
+    highest_active_idx = 0
+    active_channels = {}
+    
+    # Scan all DMX values to find active channels
+    for i, val in enumerate(current_dmx_values):
+        if val > 0:
+            active_channels[i] = val
+            highest_active_idx = max(highest_active_idx, i)
+    
+    # Return all channels up to the highest active one, plus metadata
+    values = [int(v) for v in current_dmx_values[:highest_active_idx + 1]]
+    
+    active_scene = get_active_scene()
+
+    return jsonify({
+        'values': values,
+        'active_channels': active_channels,
+        'highest_active': highest_active_idx,
+        'active_scene': active_scene
+    })

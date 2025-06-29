@@ -33,6 +33,16 @@
                 {% endif %}
             </div>
         </div>
+
+        <!-- DMX Monitor - Visible on larger screens -->
+        <div class="dmx-monitor-container" style="display:block !important;">
+            <div class="dmx-monitor-header">
+                <h2>DMX Channel Monitor</h2> <p id="active_scene"></p>
+            </div>
+            <div class="dmx-monitor-grid" id="dmxMonitor">
+                <div class="dmx-loading">Loading channel data...</div>
+            </div>
+        </div>
     </main>
 
     <footer>
@@ -40,5 +50,6 @@
     </footer>
 
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dmx-monitor.js') }}"></script>
 </body>
 </html>
