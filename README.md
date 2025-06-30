@@ -15,6 +15,7 @@ DMX Life is a simple web-based application for controlling DMX lighting fixtures
 - **Scene Designer**: Create and save lighting scenes with selective fixture control
 - **Visual DMX Mapping**: See which DMX channels are assigned to which fixtures
 - **Fixture Selection**: Choose which fixtures participate in each scene
+- **On-Demand DMX Monitor**: Real-time visualization of all 512 DMX channel values (available on large screens when requested)
 
 ## Installation
 
@@ -81,6 +82,14 @@ Finally, use the main interface to activate your scenes:
 - Go to "Scenes" page
 - Click on any scene to activate it
 - Only enabled fixtures in that scene will respond
+
+### 5. DMX Monitor (Optional)
+
+On larger screens, you can view real-time DMX channel data:
+- Look for the "Show Monitor" button on the main scenes page
+- Click it to display a live view of all 512 DMX channel values
+- The monitor updates at approximately 10fps to show current channel states
+- Click "Hide Monitor" to close the monitor and stop polling
 
 ## System Requirements
 
