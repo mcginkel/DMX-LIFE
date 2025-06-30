@@ -13,6 +13,7 @@ dmx_controller = None
 dmx_thread = None
 dmx_running = False
 active_scene = None
+highest_active_idx = 0  # Highest active DMX channel index
 scenes = {}
 
 # Variables for smooth transitions and monitoring
@@ -20,7 +21,7 @@ current_dmx_values = bytearray(512)  # Current DMX values - exported for monitor
 target_dmx_values = bytearray(512)   # Target DMX values
 transition_active = False            # Whether a transition is in progress
 transition_start_time = 0            # When the transition started
-TRANSITION_DURATION = 2.0            # Transition duration in seconds
+TRANSITION_DURATION = 3.0            # Transition duration in seconds
 
 def init_dmx_controller(app):
     """Initialize the DMX controller with application context"""
@@ -149,7 +150,7 @@ def dmx_thread_function():
         
 def activate_scene(scene_name):
     """Activate a lighting scene"""
-    global active_scene, scenes, dmx_controller
+    global active_scene, scenes, dmx_controller, highest_active_idx
     
     if scene_name not in scenes:
         current_app.logger.error(f"Scene '{scene_name}' not found")
@@ -186,11 +187,13 @@ def activate_scene(scene_name):
         for i in range(512):
             buffer[i] = 0
             
+        highest_active_idx = 0
         # If no specific fixture is enabled, activate all channels
         if not enabled_fixtures:
             for channel, value in enumerate(channel_values):
                 if 0 <= channel < 512 and value:
                     buffer[channel] = value
+            highest_active_idx = 511
         else:
             # Apply channel values only for enabled fixtures
             for fixture in fixtures:
@@ -204,6 +207,7 @@ def activate_scene(scene_name):
                 start_channel = fixture.get('start_channel', 1) - 1  # Convert to 0-based index
                 channel_count = fixture.get('channel_count', 1)
                 
+                highest_active_idx = max(highest_active_idx, start_channel + channel_count - 1)
                 for i in range(channel_count):
                     channel = start_channel + i
                     if 0 <= channel < 512 and channel < len(channel_values) :#and channel_values[channel]:
@@ -228,6 +232,10 @@ def activate_scene(scene_name):
 def get_active_scene():
     """Get the currently active scene"""
     return active_scene
+
+def get_highest_active_idx():
+    """Get the highest active DMX channel index"""
+    return highest_active_idx
 
 def get_available_scenes():
     """Get list of available scenes"""

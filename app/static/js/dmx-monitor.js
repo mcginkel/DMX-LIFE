@@ -156,22 +156,25 @@ function initDmxMonitor() {
     // Fetch current DMX values from API
     function fetchDmxValues() {
         // Add loading class to monitor
-        monitorElement.classList.add('loading');
+        //monitorElement.classList.add('loading');
         
         fetch('/api/dmx/values')
             .then(response => response.json())
             .then(data => {
                 if (data.values && Array.isArray(data.values)) {                    
-                    // Count active channels
-                    const activeChannels = Object.keys(data.active_channels || {}).length;
+                    // Find the highest channel with a non-zero value
+                    let highestActive = 0;
+                    for (let i = data.values.length - 1; i >= 0; i--) {
+                        if (data.values[i] > 0) {
+                            highestActive = i;
+                            break;
+                        }
+                    }
                     
-                    // Update the DMX data based on the highest active channel
-                    const highestActive = data.highest_active || 0;
-                    
-                    // Check if we need to create or update channel bars based on the highest active channel
+                    // Check if we need to create channel bars based on the highest active channel
                     ensureChannelBarsExist(highestActive);
                     
-                    updateDmxVisualizer(data.values, data.active_channels, data.active_scene);
+                    updateDmxVisualizer(data.values);
                     
                     activeSceneElement.textContent = data.active_scene || 'None';
                     // Remove loading class after first successful load
@@ -189,34 +192,23 @@ function initDmxMonitor() {
     }
     
     // Update the visualizer with new values using batched updates
-    function updateDmxVisualizer(values, activeChannels = {}) {
+    function updateDmxVisualizer(values) {
         // Clear update queue
         updateQueue = [];
         
-        if (activeChannels) {
-            // Update based on the active channels dictionary from the API
-            Object.keys(activeChannels).forEach(index => {
-                const i = parseInt(index, 10);
-                const value = activeChannels[index];
-                
+        // Check each channel value and queue updates only for changed values
+        for (let i = 0; i < Math.min(values.length, 512); i++) {
+            const newValue = values[i] || 0;
+            
+            // Only update if the value has changed
+            if (dmxValues[i] !== newValue) {
                 updateQueue.push({
                     index: i,
-                    value: value
+                    value: newValue
                 });
                 
-                // Update stored value immediately
-                dmxValues[i] = value;
-            });
-            
-            // Also update values that are now zero but were active before
-            for (let i = 0; i < values.length && i < 512; i++) {
-                if (dmxValues[i] > 0 && !activeChannels[i]) {
-                    updateQueue.push({
-                        index: i,
-                        value: 0
-                    });
-                    dmxValues[i] = 0;
-                }
+                // Update stored value
+                dmxValues[i] = newValue;
             }
         }
         
