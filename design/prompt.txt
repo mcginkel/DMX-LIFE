@@ -48,6 +48,10 @@ Create a Python web application called "DMX Life" for controlling DMX-enabled li
    - Interface to add/edit/delete DMX fixtures
    - Fields for fixture name, type, and starting DMX channel
    - Support for common fixture types (Generic, RGB, RGBW, Moving Head)
+   - **Fixture Linking**: Option to link fixtures of the same type to a master fixture
+     - Linked fixtures automatically inherit configuration changes from the master
+     - Master fixtures (with linked fixtures) cannot link to others to prevent loops
+     - Visual indicators show linking relationships in the fixture list
    - Visual DMX channel map showing which channels are used
    - Warning for channel conflicts between fixtures
 

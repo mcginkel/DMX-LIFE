@@ -8,11 +8,12 @@ from flask.cli import F
 class Fixture:
     """Represents a DMX fixture"""
     
-    def __init__(self, name, fixture_type, start_channel, channel_count):
+    def __init__(self, name, fixture_type, start_channel, channel_count, linked_to=None):
         self.name = name
         self.fixture_type = fixture_type
         self.start_channel = start_channel
         self.channel_count = channel_count
+        self.linked_to = linked_to  # Index of fixture this one is linked to, or None
         
     def to_dict(self):
         """Convert fixture to dictionary for JSON serialization"""
@@ -20,7 +21,8 @@ class Fixture:
             'name': self.name,
             'type': self.fixture_type,
             'start_channel': self.start_channel,
-            'channel_count': self.channel_count
+            'channel_count': self.channel_count,
+            'linked_to': self.linked_to
         }
     
     @classmethod
@@ -30,7 +32,8 @@ class Fixture:
             data.get('name', 'Unknown'),
             data.get('type', 'Generic'),
             data.get('start_channel', 1),
-            data.get('channel_count', 1)
+            data.get('channel_count', 1),
+            data.get('linked_to', None)
         )
 
 

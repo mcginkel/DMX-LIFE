@@ -64,6 +64,15 @@
                             <input type="number" id="fixture-channel" name="start_channel" min="1" max="512" value="1">
                         </div>
                         
+                        <div class="form-group">
+                            <label for="fixture-link">Link to Fixture:</label>
+                            <select id="fixture-link" name="linked_to">
+                                <option value="">Not linked</option>
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                            <div class="help-text">Link this fixture to another of the same type. Changes to the linked fixture will be copied to this one.</div>
+                        </div>
+                        
                         <div class="form-group fixture-channels">
                             <h4>Channels</h4>
                             <div id="channel-list">
