@@ -480,14 +480,36 @@ footer {
     transition: opacity 0.2s ease-in-out;
 }
 
-/* DMX Monitor Styles - Only display on large screens */
+/* Show Monitor Button Styles */
+.show-monitor-container {
+    margin-top: 30px;
+    display: none; /* Hidden by default, shown on large screens */
+    text-align: center;
+}
+
+.show-monitor-btn {
+    background-color: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.show-monitor-btn:hover {
+    background-color: #0056b3;
+}
+
+/* DMX Monitor Styles - Hidden by default, shown on request */
 .dmx-monitor-container {
     background-color: white;
     border-radius: 8px;
     padding: 20px;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     margin-top: 30px;
-    display: none !important; /* Hidden by default, shown via media query */
+    display: none; /* Hidden by default */
 }
 
 .dmx-monitor-header {
@@ -495,6 +517,27 @@ footer {
     justify-content: space-between;
     align-items: center;
     margin-bottom: 15px;
+}
+
+.monitor-controls {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.hide-monitor-btn {
+    background-color: var(--grey-color);
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.hide-monitor-btn:hover {
+    background-color: #5a6268;
 }
 
 
@@ -599,10 +642,10 @@ footer {
     }
 }
 
-/* Show DMX monitor only on larger screens (iPad+) */
+/* Show monitor button only on larger screens (iPad+) */
 @media (min-width: 768px) {
-    .dmx-monitor-container {
-        display: block !important;
+    .show-monitor-container {
+        display: block;
     }
 }
 

@@ -2,6 +2,8 @@
 // This script creates a visual representation of DMX values
 // Optimized for performance with batched DOM updates and throttled API calls
 
+let dmxMonitorInstance = null;
+
 document.addEventListener('DOMContentLoaded', function() {
     // Get screen info
     const screenWidth = window.innerWidth;
@@ -10,31 +12,80 @@ document.addEventListener('DOMContentLoaded', function() {
     // Check if this is a large screen (iPad+) - min-width 768px is commonly used for tablets
     const isLargeScreen = window.matchMedia('(min-width: 768px)').matches;
     const monitorContainer = document.querySelector('.dmx-monitor-container');
+    const showMonitorBtn = document.getElementById('showMonitorBtn');
+    const hideMonitorBtn = document.getElementById('hideMonitorBtn');
+    const showMonitorContainer = document.querySelector('.show-monitor-container');
     
-    // Force show the container if we're on a large screen
-    if (isLargeScreen && monitorContainer) {
-        monitorContainer.style.display = 'block';
-        
-        try {
-            // Initialize monitor
-            initDmxMonitor();
-        } catch (error) {
-            console.error('Error initializing DMX monitor:', error);
-        }
-    } else if (monitorContainer) {
-        // Hide the monitor on small screens
-        monitorContainer.style.display = 'none';
+    // Set up button event listeners
+    if (showMonitorBtn) {
+        showMonitorBtn.addEventListener('click', function() {
+            showDmxMonitor();
+        });
     }
     
-    // Add resize listener to update the monitor visibility
+    if (hideMonitorBtn) {
+        hideMonitorBtn.addEventListener('click', function() {
+            hideDmxMonitor();
+        });
+    }
+    
+    // Function to show the DMX monitor
+    function showDmxMonitor() {
+        if (monitorContainer && showMonitorContainer) {
+            // Hide the show button and show the monitor
+            showMonitorContainer.style.display = 'none';
+            monitorContainer.style.display = 'block';
+            
+            // Initialize the monitor if not already done
+            if (!dmxMonitorInstance) {
+                try {
+                    dmxMonitorInstance = initDmxMonitor();
+                } catch (error) {
+                    console.error('Error initializing DMX monitor:', error);
+                }
+            }
+        }
+    }
+    
+    // Function to hide the DMX monitor
+    function hideDmxMonitor() {
+        if (monitorContainer && showMonitorContainer) {
+            // Show the show button and hide the monitor
+            const isLargeScreenNow = window.matchMedia('(min-width: 768px)').matches;
+            if (isLargeScreenNow) {
+                showMonitorContainer.style.display = 'block';
+            }
+            monitorContainer.style.display = 'none';
+            
+            // Stop the monitor polling if it exists
+            if (dmxMonitorInstance && dmxMonitorInstance.cleanup) {
+                dmxMonitorInstance.cleanup();
+                dmxMonitorInstance = null;
+            }
+        }
+    }
+    
+    // Add resize listener to manage button visibility
     window.addEventListener('resize', function() {
         const isLargeScreenNow = window.matchMedia('(min-width: 768px)').matches;
         
-        if (monitorContainer) {
+        if (showMonitorContainer) {
             if (isLargeScreenNow) {
-                monitorContainer.style.display = 'block';
+                // Only show the button if monitor is not currently visible
+                if (!monitorContainer || monitorContainer.style.display === 'none') {
+                    showMonitorContainer.style.display = 'block';
+                }
             } else {
-                monitorContainer.style.display = 'none';
+                // Hide both button and monitor on small screens
+                showMonitorContainer.style.display = 'none';
+                if (monitorContainer) {
+                    monitorContainer.style.display = 'none';
+                }
+                // Stop monitor if running
+                if (dmxMonitorInstance && dmxMonitorInstance.cleanup) {
+                    dmxMonitorInstance.cleanup();
+                    dmxMonitorInstance = null;
+                }
             }
         }
     });
@@ -46,7 +97,7 @@ function initDmxMonitor() {
     const monitorElement = document.getElementById('dmxMonitor');
     if (!monitorElement) {
         console.error('DMX Monitor element not found');
-        return;
+        return null;
     }
     const activeSceneElement = document.getElementById('active_scene');
     // Clear any existing content
@@ -67,11 +118,22 @@ function initDmxMonitor() {
     // Start the polling at 1fps (1000ms)
     const pollInterval = setInterval(fetchDmxValues, 1000);
     
-    // Set up cleanup when page is unloaded
-    window.addEventListener('beforeunload', function() {
+    // Cleanup function
+    function cleanup() {
         console.log('Cleaning up DMX monitor...');
         clearInterval(pollInterval);
-    });
+        // Clear the monitor content
+        if (monitorElement) {
+            monitorElement.innerHTML = '<div class="dmx-loading">Loading channel data...</div>';
+        }
+        // Reset state
+        dmxBars = [];
+        updateQueue = [];
+        updatePending = false;
+    }
+    
+    // Set up cleanup when page is unloaded
+    window.addEventListener('beforeunload', cleanup);
     
     // Create the channel visualization bars
     function createChannelBars() {
@@ -252,4 +314,9 @@ function initDmxMonitor() {
             updatePending = false;
         }
     }
+    
+    // Return object with cleanup method
+    return {
+        cleanup: cleanup
+    };
 }

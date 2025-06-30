@@ -34,10 +34,19 @@
             </div>
         </div>
 
-        <!-- DMX Monitor - Visible on larger screens -->
-        <div class="dmx-monitor-container" style="display:block !important;">
+        <!-- Show Monitor Button - Visible on larger screens only -->
+        <div class="show-monitor-container">
+            <button id="showMonitorBtn" class="show-monitor-btn">Show Monitor</button>
+        </div>
+
+        <!-- DMX Monitor - Hidden by default, shown on request -->
+        <div class="dmx-monitor-container" id="dmxMonitorContainer">
             <div class="dmx-monitor-header">
-                <h2>DMX Channel Monitor</h2> <p id="active_scene"></p>
+                <h2>DMX Channel Monitor</h2> 
+                <div class="monitor-controls">
+                    <p id="active_scene"></p>
+                    <button id="hideMonitorBtn" class="hide-monitor-btn">Hide Monitor</button>
+                </div>
             </div>
             <div class="dmx-monitor-grid" id="dmxMonitor">
                 <div class="dmx-loading">Loading channel data...</div>
