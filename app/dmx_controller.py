@@ -151,7 +151,8 @@ def dmx_thread_function():
 def activate_scene(scene_name):
     """Activate a lighting scene"""
     global active_scene, scenes, dmx_controller, highest_active_idx
-    
+    global transition_active, transition_start_time, target_dmx_values
+        
     if scene_name not in scenes:
         current_app.logger.error(f"Scene '{scene_name}' not found")
         return False
@@ -183,9 +184,10 @@ def activate_scene(scene_name):
         # Convert scene data to byte array for DMX
         buffer = bytearray(512)
         
-        # First set all channels to 0
+        target_dmx_values
+        # First set all channels to current value
         for i in range(512):
-            buffer[i] = 0
+            buffer[i] = target_dmx_values[i]
             
         highest_active_idx = 0
         # If no specific fixture is enabled, activate all channels
@@ -212,9 +214,6 @@ def activate_scene(scene_name):
                     channel = start_channel + i
                     if 0 <= channel < 512 and channel < len(channel_values) :#and channel_values[channel]:
                         buffer[channel] = channel_values[channel]
-        
-        # Set up smooth transition to new scene
-        global transition_active, transition_start_time, target_dmx_values
         
         # Store target values
         target_dmx_values = buffer
