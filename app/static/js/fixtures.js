@@ -47,6 +47,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
                 renderFixtureList();
                 renderDmxMap();
+                
+                // Auto-select first fixture if available, otherwise create new fixture
+                if (fixtures.length > 0) {
+                    editFixture(0);
+                } else {
+                    createNewFixture();
+                }
             })
             .catch(error => {
                 console.error('Error loading fixtures:', error);
@@ -92,7 +99,16 @@ document.addEventListener('DOMContentLoaded', function() {
         fixtureLinkSelect.innerHTML = '<option value="">Not linked</option>';
         
         const currentType = fixtureTypeSelect.value;
-        
+        const hasLinkedFixtures = fixtures.some((f, i) => f.linked_to === editingFixtureIndex && i !== editingFixtureIndex);
+
+        if (hasLinkedFixtures) {
+            fixtureLinkSelect.disabled = true;
+            fixtureLinkSelect.title = 'Cannot link to another fixture while this one has linked fixtures';
+            return;
+        } else {
+            fixtureLinkSelect.disabled = false;
+            fixtureLinkSelect.title = '';
+        }
         fixtures.forEach((fixture, index) => {
             // Only show fixtures of the same type
             if (fixture.type === currentType && index !== editingFixtureIndex) {
@@ -103,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (editingFixtureIndex === -1 || fixture.linked_to !== editingFixtureIndex) {
                         // Check if this fixture has others linked to it (making it a master)
                         const hasLinkedFixtures = fixtures.some((f, i) => f.linked_to === index && i !== index && i !== editingFixtureIndex);
-                        if (!hasLinkedFixtures) {
+                        if (!hasLinkedFixtures||true) {
                             const option = document.createElement('option');
                             option.value = index;
                             option.textContent = fixture.name;
@@ -251,12 +267,6 @@ document.addEventListener('DOMContentLoaded', function() {
                         return;
                     }
                     
-                    // Check if the target fixture has others linked to it
-                    const hasLinkedFixtures = fixtures.some((f, i) => f.linked_to === linkedTo && i !== editingFixtureIndex);
-                    if (hasLinkedFixtures) {
-                        alert('Cannot link to a fixture that already has other fixtures linked to it');
-                        return;
-                    }
                 }
                 
                 // Check for channel conflicts
@@ -272,12 +282,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (editingFixtureIndex === -1) {
                     fixtures.push(fixture);
                 } else {
-                    const oldFixture = fixtures[editingFixtureIndex];
-                    fixtures[editingFixtureIndex] = fixture;
-                    
-                    // If this is a master fixture (others are linked to it), 
-                    // propagate changes to linked fixtures
-                    propagateChangesToLinkedFixtures(editingFixtureIndex, oldFixture, fixture);
+                    fixtures[editingFixtureIndex] = fixture;                    
                 }
                 
                 // Save fixtures to server
@@ -287,24 +292,6 @@ document.addEventListener('DOMContentLoaded', function() {
                 console.error('Error getting fixture type details:', error);
                 alert('Error saving fixture. See console for details.');
             });
-    }
-    
-    function propagateChangesToLinkedFixtures(masterIndex, oldFixture, newFixture) {
-        // Find all fixtures linked to this master fixture
-        fixtures.forEach((fixture, index) => {
-            if (fixture.linked_to === masterIndex && index !== masterIndex) {
-                // Update linked fixture with changes from master
-                // Only propagate type, start_channel if they changed
-                if (oldFixture.type !== newFixture.type) {
-                    fixtures[index].type = newFixture.type;
-                    fixtures[index].channel_count = newFixture.channel_count;
-                }
-                
-                // Optionally propagate channel changes - this depends on requirements
-                // For now, we'll only propagate type and channel count, not start_channel
-                // as each fixture needs its own channel assignment
-            }
-        });
     }
     
     function checkChannelConflicts(newFixture) {

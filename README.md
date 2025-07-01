@@ -13,6 +13,7 @@ DMX Life is a simple web-based application for controlling DMX lighting fixtures
 - **Art-Net Protocol**: Industry standard for DMX over Ethernet/WiFi
 - **Fixture Setup**: Configure different types of DMX fixtures (RGB, RGBW, Moving Heads, etc.)
 - **Fixture Linking**: Link fixtures of the same type to automatically sync configuration changes
+- **Real-time Value Sync**: Linked fixtures automatically receive matching channel values when adjusting sliders
 - **Scene Designer**: Create and save lighting scenes with selective fixture control
 - **Visual DMX Mapping**: See which DMX channels are assigned to which fixtures
 - **Fixture Selection**: Choose which fixtures participate in each scene
@@ -72,6 +73,8 @@ Next, define your DMX fixtures:
 
 **Fixture Linking Feature**: When fixtures are linked, changes to the master fixture's type and channel configuration will automatically propagate to all linked fixtures. This is useful when you have multiple identical fixtures that should maintain the same configuration. The visual fixture list shows linked relationships with arrows (→) and marks master fixtures with [Master].
 
+**Real-time Value Synchronization**: During scene editing, when you adjust a channel slider on a master fixture, all linked fixtures of the same type will automatically receive the same value on their corresponding channels. This makes it easy to control multiple identical fixtures simultaneously - simply adjust one fixture and all linked fixtures will follow in real-time.
+
 ### 3. Scene Creation
 
 Create lighting scenes:
@@ -80,6 +83,7 @@ Create lighting scenes:
 - Enter a scene name
 - Enable or disable fixtures you want to include in this scene
 - Adjust the sliders for each enabled fixture's channels
+- **Linked Fixture Control**: When you adjust a slider on a master fixture, all linked fixtures of the same type will automatically receive the same value on their corresponding channels in real-time
 - Click "Test Scene" to preview
 - Click "Save Scene" when finished
 
