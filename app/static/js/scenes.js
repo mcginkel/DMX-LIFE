@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // State
     let scenes = [];
     let fixtures = [];
+    let fixtureTypes = {}; // Cache for fixture types
     let editingSceneName = null;
     let maxScenes = 10;
     
@@ -37,9 +38,18 @@ document.addEventListener('DOMContentLoaded', function() {
                 fixtures = data.fixtures || [];
                 maxScenes = data.MAX_SCENES || 10;
                 
+                // Preload fixture types for better performance
+                preloadFixtureTypes();
+                
                 renderSceneList();
                 updateSceneCounter();
-                createNewScene();
+                
+                // Auto-select first scene if available, otherwise create new scene
+                if (scenes.length > 0) {
+                    editScene(scenes[0].name);
+                } else {
+                    createNewScene();
+                }
             })
             .catch(error => {
                 console.error('Error loading data:', error);
@@ -146,8 +156,15 @@ document.addEventListener('DOMContentLoaded', function() {
             fixtureEnableLabel.appendChild(document.createTextNode(' Enable'));
             
             // Fixture name
-            const fixtureHeader = document.createElement('h4');
-            fixtureHeader.textContent = `${fixture.name} (${fixture.type})`;
+            const fixtureHeader = document.createElement('h4');            // Add visual indicator for linked fixtures
+            let displayText = fixture.name;
+            if (fixture.linked_to !== undefined && fixture.linked_to !== null) {
+                const linkedFixture = fixtures[fixture.linked_to];
+                if (linkedFixture) {
+                    displayText += ` (→ ${linkedFixture.name})`;
+                }
+            }
+            fixtureHeader.textContent = `${displayText} (${fixture.type})`;
             
             fixtureHeaderContainer.appendChild(fixtureHeader);
             fixtureHeaderContainer.appendChild(fixtureEnableLabel);
@@ -184,19 +201,32 @@ document.addEventListener('DOMContentLoaded', function() {
         const channelContainer = document.createElement('div');
         channelContainer.className = 'channel-control';
         
-        // Get channel name from fixture type
+        // Get channel name from fixture type (with caching)
         let channelName = `Channel ${channelOffset + 1}`;
-        fetch(`/setup/api/fixture-types/${fixture.type}`)
-            .then(response => response.json())
-            .then(data => {
-                const channelInfo = data.channels[channelOffset];
-                if (channelInfo) {
-                    channelLabel.textContent = channelInfo.name;
-                }
-            })
-            .catch(error => {
-                console.error('Error loading fixture type details:', error);
-            });
+        
+        // Check cache first
+        if (fixtureTypes[fixture.type]) {
+            const channelInfo = fixtureTypes[fixture.type].channels[channelOffset];
+            if (channelInfo) {
+                channelName = channelInfo.name;
+            }
+        } else {
+            // Fetch and cache fixture type data
+            fetch(`/setup/api/fixture-types/${fixture.type}`)
+                .then(response => response.json())
+                .then(data => {
+                    // Cache the fixture type data
+                    fixtureTypes[fixture.type] = data;
+                    
+                    const channelInfo = data.channels[channelOffset];
+                    if (channelInfo) {
+                        channelLabel.textContent = channelInfo.name;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading fixture type details:', error);
+                });
+        }
         
         // Label
         const channelLabel = document.createElement('label');
@@ -220,6 +250,10 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update value display when slider changes
         channelInput.addEventListener('input', function() {
             valueDisplay.textContent = this.value;
+            
+            // Copy value to linked fixtures
+            copyValueToLinkedFixtures(fixture, channelOffset, this.value);
+            
             testScene();
         });
         
@@ -414,67 +448,59 @@ document.addEventListener('DOMContentLoaded', function() {
             alert('Error testing scene. See console for details.');
         });
     }
-
-    function testSceneOld() {
-        const sceneName = sceneNameInput.value;
-        
-        // Validate scene name
-        if (!sceneName) {
-            alert('Scene name is required');
-            return;
-        }
-        
-        // Collect channel values from form
-        const channels = [];
-        const sliders = fixtureControls.querySelectorAll('input[type="range"]');
-        
-        // Initialize all channels to 0
-        for (let i = 0; i < 512; i++) {
-            channels[i] = 0;
-        }
-        
-        // Set channel values from sliders
-        sliders.forEach(slider => {
-            const dmxIndex = parseInt(slider.getAttribute('data-dmx-index'));
-            channels[dmxIndex] = parseInt(slider.value);
-        });
-        
-        // Create temporary scene
-        const tempSceneName = `__test_${Date.now()}`;
-        
-        // Save temporary scene and activate it
-        fetch('/setup/api/config/scenes', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                name: tempSceneName,
-                channels: channels
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Activate the temporary scene
-                return fetch('/api/scenes/activate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ scene: tempSceneName })
-                });
-            }
-            throw new Error('Failed to create temporary scene');
-        })
-        .then(response => response.json())
-        .catch(error => {
-            console.error('Error testing scene:', error);
-            alert('Error testing scene. See console for details.');
-        });
-    }
     
     function cancelEdit() {
         createNewScene();
+    }
+    
+    function copyValueToLinkedFixtures(sourceFixture, channelOffset, value) {
+        // Find fixtures linked to the source fixture
+        const sourceFixtureIndex = fixtures.findIndex(f => f.name === sourceFixture.name);
+        if (sourceFixtureIndex === -1) return;
+        
+        fixtures.forEach((fixture, index) => {
+            // Skip if this is the source fixture or if it's not linked to the source
+            if (index === sourceFixtureIndex || fixture.linked_to !== sourceFixtureIndex) {
+                return;
+            }
+            
+            // Only copy if fixtures are of the same type
+            if (fixture.type !== sourceFixture.type) {
+                return;
+            }
+            
+            // Calculate the corresponding DMX channel in the linked fixture
+            const linkedChannelIndex = fixture.start_channel + channelOffset - 1; // 0-based index
+            
+            // Find the corresponding slider for this channel
+            const linkedSlider = fixtureControls.querySelector(`input[data-dmx-index="${linkedChannelIndex}"]`);
+            if (linkedSlider) {
+                linkedSlider.value = value;
+                // Update the value display
+                const valueDisplay = linkedSlider.parentNode.querySelector('.value');
+                if (valueDisplay) {
+                    valueDisplay.textContent = value;
+                }
+            }
+        });
+    }
+    
+    function preloadFixtureTypes() {
+        // Get unique fixture types
+        const uniqueTypes = [...new Set(fixtures.map(f => f.type))];
+        
+        // Preload fixture type data for all unique types
+        uniqueTypes.forEach(type => {
+            if (!fixtureTypes[type]) {
+                fetch(`/setup/api/fixture-types/${type}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        fixtureTypes[type] = data;
+                    })
+                    .catch(error => {
+                        console.error(`Error preloading fixture type ${type}:`, error);
+                    });
+            }
+        });
     }
 });
