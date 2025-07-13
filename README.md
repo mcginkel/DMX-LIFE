@@ -1,16 +1,20 @@
 # DMX Life - Lighting Scene Controller
 
-DMX Life is a simple web-based application for controlling DMX lighting fixtures via Art-Net protocol over a network. The application allows you to:
+DMX Life is a simple web-based application for controlling DMX lighting fixtures via multiple interfaces including Art-Net protocol over a network and USB-DMX devices. The application allows you to:
 
 - Define DMX fixtures and their channel assignments
 - Create up to 10 lighting scenes
 - Selectively enable/disable fixtures in each scene
 - Quickly switch between scenes with a simple interface
+- Choose between Art-Net (network) and USB-DMX interfaces
 
 ## Features
 
 - **Simple Web Interface**: Control your lighting from any device with a browser
+- **Multiple DMX Interfaces**: Support for both Art-Net (network) and USB-DMX connections
 - **Art-Net Protocol**: Industry standard for DMX over Ethernet/WiFi
+- **USB-DMX Support**: Direct connection to USB DMX interfaces (Enttec, FTDI-based devices)
+- **Auto-Detection**: Automatic detection of USB-DMX devices
 - **Fixture Setup**: Configure different types of DMX fixtures (RGB, RGBW, Moving Heads, etc.)
 - **Fixture Linking**: Link fixtures of the same type to automatically sync configuration changes
 - **Real-time Value Sync**: Linked fixtures automatically receive matching channel values when adjusting sliders
@@ -50,13 +54,49 @@ DMX Life is a simple web-based application for controlling DMX lighting fixtures
 
 ## Setup Instructions
 
-### 1. Network Configuration
+## System Requirements
 
-First, configure the Art-Net network settings:
-- Go to "Setup" -> "Network Setup"
+- Python 3.7+
+- Network connection to DMX fixtures via Art-Net **OR** USB-DMX interface device
+- Modern web browser
+
+### USB-DMX Device Compatibility
+
+This application supports common USB-DMX interfaces including:
+- Enttec Open DMX USB
+- FTDI-based DMX interfaces
+- DMXking ultraDMX
+- Most generic USB-to-DMX converters
+
+**Note**: For USB-DMX support, the `pyserial` library is required and should be automatically installed via requirements.txt.
+
+## Interface Setup
+
+### Choosing Your DMX Interface
+
+DMX Life supports two types of DMX interfaces:
+
+1. **Art-Net (Network)**: Send DMX data over Ethernet/WiFi using the Art-Net protocol
+2. **USB-DMX**: Direct connection to a USB DMX interface device
+
+### 1. Interface Configuration
+
+Go to "Setup" -> "Interface Setup" to configure your DMX interface:
+
+#### Art-Net Configuration:
+- Select "Art-Net" as your interface type
 - Enter the Art-Net IP address (use 255.255.255.255 for broadcast)
 - Set the Universe and other parameters
-- Click "Save Network Settings"
+- Click "Save Settings"
+
+#### USB-DMX Configuration:
+- Select "USB-DMX" as your interface type
+- Choose your USB port (auto-detection available)
+- Adjust baud rate if needed (usually 250000 for standard DMX)
+- Configure advanced settings if required
+- Click "Save Settings"
+
+The application will automatically switch between interface types and restart the DMX output when you change the interface configuration.
 
 ### 2. Fixture Configuration
 
@@ -112,6 +152,8 @@ On larger screens, you can view real-time DMX channel data:
 
 - Built with Flask (Python web framework)
 - Uses StupidArtnet library for Art-Net protocol
+- Uses PySerial library for USB-DMX communication
+- Pluggable DMX interface architecture supporting multiple hardware types
 - Responsive design works on desktop and mobile devices
 
 ## License

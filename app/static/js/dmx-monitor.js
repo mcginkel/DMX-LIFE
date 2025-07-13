@@ -116,7 +116,7 @@ function initDmxMonitor() {
     console.log('Starting DMX polling...');
     
     // Start the polling at 1fps (1000ms)
-    const pollInterval = setInterval(fetchDmxValues, 1000);
+    const pollInterval = setInterval(fetchDmxValues, 100);
     
     // Cleanup function
     function cleanup() {

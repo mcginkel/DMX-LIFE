@@ -1,9 +1,16 @@
 {
+    "interface_type": "artnet",
     "artnet_ip": "192.168.3.170",
     "artnet_port": 6454,
     "universe": 1,
     "packet_size": 512,
     "refresh_rate": 30,
+    "usb_port": "auto",
+    "usb_baud_rate": 250000,
+    "usb_data_bits": 8,
+    "usb_stop_bits": 2,
+    "usb_parity": "N",
+    "usb_timeout": 1.0,
     "fixtures": [
         {
             "channel_count": 6,

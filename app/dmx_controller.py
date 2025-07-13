@@ -1,15 +1,15 @@
 """
-DMX Controller - Handles communication with DMX fixtures via Art-Net
+DMX Controller - Handles communication with DMX fixtures via pluggable interfaces
 """
 import json
 import os
 import time
 import threading
 from flask import current_app
-from stupidArtnet import StupidArtnet
+from app.dmx_interfaces.factory import DMXInterfaceFactory
 
-# Global DMX controller instance
-dmx_controller = None
+# Global DMX interface instance
+dmx_interface = None
 dmx_thread = None
 dmx_running = False
 active_scene = None
@@ -28,11 +28,18 @@ def init_dmx_controller(app):
     
     # Load default configuration
     default_config = {
+        'interface_type': 'artnet',  # Default to Art-Net
         'artnet_ip': '255.255.255.255',  # Broadcast by default
         'artnet_port': 6454,
         'universe': 0,
         'packet_size': 512,
         'refresh_rate': 30,  # FPS
+        'usb_port': 'auto',  # Auto-detect USB port
+        'usb_baud_rate': 250000,
+        'usb_data_bits': 8,
+        'usb_stop_bits': 2,
+        'usb_parity': 'N',
+        'usb_timeout': 1.0,
         'fixtures': [],
         'scenes': []
     }
@@ -57,23 +64,17 @@ def init_dmx_controller(app):
 
 def load_configuration():
     """Load DMX configuration from file"""
-    global dmx_controller, scenes
+    global dmx_interface, scenes
     
     try:
         with open(current_app.config['CONFIG_FILE'], 'r') as f:
             config = json.load(f)
         
-        # Initialize the Art-Net controller
-        dmx_controller = StupidArtnet(
-            config.get('artnet_ip', '255.255.255.255'),
-            config.get('universe', 0),
-            config.get('packet_size', 512),
-            config.get('refresh_rate', 30)
-        )
-        # TODO : do we need this?
-        dmx_controller.set_simplified(False)
-        dmx_controller.set_net(0)
-        dmx_controller.set_subnet(0)
+        # Get interface type from config
+        interface_type = config.get('interface_type', 'artnet')
+        
+        # Create the appropriate DMX interface
+        dmx_interface = DMXInterfaceFactory.create_interface(interface_type, config)
         
         # Load scenes
         scenes = {scene['name']: scene['channels'] for scene in config.get('scenes', [])}
@@ -103,21 +104,21 @@ def stop_dmx_thread():
         return
     
     dmx_running = False
-    if dmx_controller:
-        dmx_controller.stop()
+    if dmx_interface:
+        dmx_interface.stop()
     
     dmx_thread.join(timeout=2.0)
     dmx_thread = None
 
 def dmx_thread_function():
     """Function that runs in the DMX thread"""
-    global dmx_running, dmx_controller, active_scene, transition_active
+    global dmx_running, dmx_interface, active_scene, transition_active
     global current_dmx_values, target_dmx_values, transition_start_time
     
-    if dmx_controller is None:
+    if dmx_interface is None:
         return
     
-    dmx_controller.start()
+    dmx_interface.start()
     
     while dmx_running:
         time.sleep(0.033)  # ~30fps update rate
@@ -145,20 +146,24 @@ def dmx_thread_function():
                 for i in range(512):
                     current_dmx_values[i] = target_dmx_values[i]# Ensure final values match targets exactly
         
-            # Apply updated values to DMX controller
-            dmx_controller.set(current_dmx_values)
+            # Apply updated values to DMX interface
+            dmx_interface.send_dmx(current_dmx_values)
         
 def activate_scene(scene_name):
     """Activate a lighting scene"""
-    global active_scene, scenes, dmx_controller, highest_active_idx
+    global active_scene, scenes, dmx_interface, highest_active_idx
     global transition_active, transition_start_time, target_dmx_values
         
+    if not dmx_interface.is_available():
+        current_app.logger.error("DMX interface is not available, cannot activate scene")
+        return False
+    
     if scene_name not in scenes:
         current_app.logger.error(f"Scene '{scene_name}' not found")
         return False
     current_app.logger.info(f"Scene '{scene_name}' activated")
-    if dmx_controller is None:
-        current_app.logger.error("DMX controller not initialized")
+    if dmx_interface is None:
+        current_app.logger.error("DMX interface not initialized")
         return False
     
     try:
@@ -328,8 +333,8 @@ def delete_scene(name):
         return False
 
 def test_scene(channels):
-    if dmx_controller is None:
-        current_app.logger.error("DMX controller not initialized")
+    if dmx_interface is None:
+        current_app.logger.error("DMX interface not initialized")
         return False
         
     # Convert scene data to byte array for DMX
@@ -338,7 +343,7 @@ def test_scene(channels):
         if 0 <= channel < 512:
             buffer[channel] = value
     
-    dmx_controller.set(buffer)
+    dmx_interface.send_dmx(buffer)
 
     return True
 
@@ -373,3 +378,44 @@ def get_config():
     except Exception as e:
         current_app.logger.error(f"Error reading configuration: {e}")
         return None
+
+def get_interface_status():
+    """Get the current DMX interface status"""
+    if dmx_interface is None:
+        return {'type': 'none', 'is_started': False, 'is_available': False}
+    return dmx_interface.get_status()
+
+def get_available_interface_types():
+    """Get available DMX interface types"""
+    return DMXInterfaceFactory.get_available_types()
+
+def get_interface_info():
+    """Get information about available interface types"""
+    return DMXInterfaceFactory.get_interface_info()
+
+def switch_interface_type(new_type, config_updates=None):
+    """Switch to a different DMX interface type"""
+    global dmx_interface
+    
+    try:
+        # Stop current interface if running
+        if dmx_interface and dmx_interface.is_started:
+            dmx_interface.stop()
+            
+        # Update configuration
+        config_data = {'interface_type': new_type}
+        if config_updates:
+            config_data.update(config_updates)
+            
+        if save_config(config_data):
+            # Reload configuration to create new interface
+            load_configuration()
+            current_app.logger.info(f"Switched to {new_type} interface")
+            return True
+        else:
+            current_app.logger.error(f"Failed to switch to {new_type} interface")
+            return False
+            
+    except Exception as e:
+        current_app.logger.error(f"Error switching interface type: {e}")
+        return False

@@ -1,26 +1,36 @@
 # DMX Life Application Design Prompt
 
 ## Overview
-Create a Python web application called "DMX Life" for controlling DMX-enabled lights over a network using the Art-Net protocol. The application should provide a simple user interface for creating, managing, and activating lighting scenes with selective fixture control.
+Create a Python web application called "DMX Life" for controlling DMX-enabled lights using multiple interface types including network (Art-Net protocol) and USB-DMX connections. The application should provide a simple user interface for creating, managing, and activating lighting scenes with selective fixture control and support for different DMX hardware interfaces.
 
 ## Core Requirements
 
 1. **Architecture & Framework**
    - Use Flask as the web framework
    - Implement a responsive web interface that works on both desktop and mobile devices
-   - Use StupidArtnet library for DMX over network communication
+   - Support multiple DMX interface types through a pluggable architecture:
+     - Art-Net: Use StupidArtnet library for DMX over network communication
+     - USB-DMX: Use PySerial library for direct USB DMX interface communication
    - Store configuration in JSON files for persistence
+
+2. **DMX Interface Support**
+   - **Pluggable Interface Architecture**: Abstract DMX communication layer using factory pattern
+   - **Art-Net Interface**: Network-based DMX using Art-Net protocol
+   - **USB-DMX Interface**: Direct USB connection to DMX hardware with auto-detection
+   - **Interface Switching**: Runtime switching between interface types via web interface
+   - **Auto-Detection**: Automatic detection of USB-DMX devices and available ports
 
 2. **Interface Requirements**
    - Create a clean, simple interface that non-technical users can operate
    - Implement two main modes: Scene Selection mode and Setup mode
    - Limit the application to handle a maximum of 10 scenes
    - Provide visual feedback of the currently active scene
+   - Include DMX interface selection and configuration in Setup mode
    - On larger screens (iPad+ size), provide an optional DMX monitor that shows all 512 channel values in real-time when requested by the user
 
 3. **DMX Control Features**
-   - Support Art-Net protocol for sending DMX data over network
-   - Allow configuration of Art-Net network parameters (IP address, universe, etc.)
+   - Support multiple DMX interface types (Art-Net and USB-DMX)
+   - Allow configuration of interface-specific parameters (IP address, USB port, etc.)
    - Support mapping fixtures to specific DMX channels
    - Provide real-time DMX signal output when scenes are activated
    - Enable selective activation of fixtures within scenes
@@ -38,11 +48,12 @@ Create a Python web application called "DMX Life" for controlling DMX-enabled li
 
 ### 2. Setup Mode with Three Sections:
 
-   **a. Network Setup:**
-   - Form for Art-Net IP address configuration (default: 255.255.255.255 for broadcast)
-   - Universe selection (0-15)
-   - Port configuration (default: 6454)
-   - Refresh rate setting (default: 30fps)
+   **a. DMX Interface Setup:**
+   - Interface type selection (Art-Net or USB-DMX)
+   - Art-Net configuration: IP address (default: 255.255.255.255 for broadcast), Universe selection (0-15), Port configuration (default: 6454), Refresh rate setting (default: 30fps)
+   - USB-DMX configuration: Port selection with auto-detection, Baud rate configuration (default: 250000), Advanced serial settings (data bits, stop bits, parity)
+   - Real-time interface status display and connection testing
+   - Runtime switching between interface types
 
    **b. Fixture Setup:**
    - Interface to add/edit/delete DMX fixtures
@@ -68,6 +79,13 @@ Create a Python web application called "DMX Life" for controlling DMX-enabled li
 
 ### 3. Backend Implementation:
 
+   - **DMX Interface Architecture:**
+     - Abstract DMX interface base class defining common methods (start, stop, send_dmx, is_available, get_status)
+     - Factory pattern for creating appropriate interface instances based on configuration
+     - Art-Net implementation using StupidArtnet library
+     - USB-DMX implementation using PySerial with support for common DMX USB devices
+     - Runtime interface switching with automatic restart and reconfiguration
+
    - **DMX Controller Module:**
      - Implement a background thread for continuous DMX signal output
      - Functions to activate scenes, save configurations, and control fixtures
@@ -75,10 +93,12 @@ Create a Python web application called "DMX Life" for controlling DMX-enabled li
      - Smooth transitions between scene changes over 2 seconds using linear interpolation
      - Direct immediate output for test functionality without transitions
      - Error handling for network and configuration issues
+     - Interface abstraction layer for seamless switching between hardware types
 
    - **Configuration Management:**
      - JSON-based storage for application settings, fixtures, and scenes
      - Store enabled/disabled fixture state for each scene
+     - Store DMX interface type and configuration parameters
      - Functions to load/save configuration changes
      - **Fixture Type Caching**: Implement client-side caching of fixture type definitions to improve performance
 
@@ -111,25 +131,29 @@ Create a Python web application called "DMX Life" for controlling DMX-enabled li
 
 1. Complete Flask application with:
    - Main scene selection interface
-   - Setup interfaces (Network, Fixtures, Scenes with fixture selection)
-   - DMX control backend using StupidArtnet
+   - Setup interfaces (DMX Interface, Fixtures, Scenes with fixture selection)
+   - DMX control backend with pluggable interface architecture
+   - Art-Net implementation using StupidArtnet
+   - USB-DMX implementation using PySerial
    - Configuration storage and management
 
 2. Project documentation:
-   - README.md with setup and usage instructions
-   - Requirements.txt for dependency management
+   - README.md with setup and usage instructions for both interface types
+   - Requirements.txt for dependency management including PySerial
    - Code comments explaining key functionality
 
 ## Additional Information
 
 - DMX (Digital Multiplex) is a standard for digital communication used to control lighting equipment
 - Art-Net is a protocol for transmitting DMX over Ethernet/WiFi
+- USB-DMX interfaces provide direct connection to DMX fixtures via USB-to-serial converters
 - DMX channels range from 1-512 per universe, with each channel controlling a specific function
 - Different fixture types use different numbers of channels (e.g., RGB = 3 channels, RGBW = 4 channels)
 - Scenes are collections of DMX channel values that create specific lighting effects
 - Selective fixture activation allows for more diverse lighting scenes by controlling which fixtures participate in each scene
 - **Linked Fixture Value Synchronization**: When fixtures are linked and scene editing is performed, adjusting a channel slider on the master fixture will automatically copy the same value to the corresponding channel on all linked fixtures of the same type, enabling easy control of multiple identical fixtures simultaneously
+- **USB-DMX Device Support**: The application should auto-detect common USB-DMX devices including Enttec Open DMX, FTDI-based devices, and DMXking interfaces
 
 ## Implementation Approach
 
-First, set up the Flask application structure and create the basic UI templates. Then implement the DMX controller using StupidArtnet. Add fixture management functionality, followed by scene creation with fixture selection capabilities. Implement linked fixture configuration synchronization and real-time value copying during scene editing. Add fixture type caching for improved performance. Finally, connect the UI to the backend controller and implement the configuration management.
+First, set up the Flask application structure and create the basic UI templates. Then implement the abstract DMX interface layer and both Art-Net and USB-DMX implementations using the factory pattern. Update the DMX controller to use the pluggable interface architecture. Add fixture management functionality, followed by scene creation with fixture selection capabilities. Implement linked fixture configuration synchronization and real-time value copying during scene editing. Add fixture type caching for improved performance. Update the interface setup UI to allow selection and configuration of different DMX interface types. Finally, connect the UI to the backend controller and implement the configuration management with support for multiple interface types.

@@ -720,3 +720,130 @@ footer {
     font-weight: bold;
     z-index: 5;
 }
+
+/* DMX Interface Selection Styles */
+.interface-selection {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: var(--bg-color);
+}
+
+.interface-status {
+    margin-bottom: 20px;
+    padding: 15px;
+    border-radius: 4px;
+    background-color: white;
+    border: 1px solid var(--border-color);
+}
+
+.status-active {
+    color: #27ae60;
+    font-weight: bold;
+}
+
+.status-inactive {
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.interface-types {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.interface-option {
+    position: relative;
+}
+
+.interface-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.interface-option label {
+    display: block;
+    padding: 15px;
+    border: 2px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    background-color: white;
+}
+
+.interface-option label:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.interface-option input[type="radio"]:checked + label {
+    border-color: var(--primary-color);
+    background-color: rgba(0, 168, 255, 0.1);
+}
+
+.interface-option label strong {
+    display: block;
+    font-size: 1.1em;
+    margin-bottom: 5px;
+}
+
+.interface-description {
+    font-size: 0.9em;
+    color: var(--grey-color);
+}
+
+.interface-config {
+    margin-bottom: 30px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background-color: white;
+}
+
+.interface-config h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: var(--dark-color);
+}
+
+.advanced-settings {
+    margin-top: 20px;
+}
+
+.advanced-settings details {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.advanced-settings summary {
+    cursor: pointer;
+    font-weight: bold;
+    padding: 10px;
+    margin: -10px;
+    border-radius: 4px;
+    background-color: var(--bg-color);
+}
+
+.advanced-settings summary:hover {
+    background-color: var(--light-color);
+}
+
+.advanced-settings[open] summary {
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 15px;
+}
+
+.form-group .btn-secondary {
+    width: auto;
+    margin-left: 10px;
+}
+
+/* USB Port Selection Styles */
+#usb-port option[style*="bold"] {
+    background-color: rgba(0, 168, 255, 0.1);
+}

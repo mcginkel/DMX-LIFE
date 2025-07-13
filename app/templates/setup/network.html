@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DMX Life - Network Setup</title>
+    <title>DMX Life - Interface Setup</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
@@ -19,41 +19,141 @@
 
     <main>
         <div class="setup-container">
-            <h2>Art-Net Network Setup</h2>
+            <h2>DMX Interface Setup</h2>
             
             <div class="setup-nav">
                 <a href="{{ url_for('setup.index') }}" class="back-link">← Back to Setup</a>
             </div>
             
-            <form id="network-form" class="setup-form">
-                <div class="form-group">
-                    <label for="artnet-ip">Art-Net IP Address:</label>
-                    <input type="text" id="artnet-ip" name="artnet_ip" value="{{ config.artnet_ip }}" placeholder="255.255.255.255">
-                    <p class="help-text">Use 255.255.255.255 for broadcast, or a specific IP for unicast</p>
+            <!-- Interface Type Selection -->
+            <div class="interface-selection">
+                <h3>DMX Interface Type</h3>
+                <div class="interface-status">
+                    <p><strong>Current Interface:</strong> 
+                        <span id="current-interface">{{ interface_status.type|title }}</span>
+                        <span id="interface-status" class="status-{{ 'active' if interface_status.is_started else 'inactive' }}">
+                            {{ 'Active' if interface_status.is_started else 'Inactive' }}
+                        </span>
+                    </p>
                 </div>
                 
-                <div class="form-group">
-                    <label for="artnet-port">Art-Net Port:</label>
-                    <input type="number" id="artnet-port" name="artnet_port" value="{{ config.artnet_port }}" placeholder="6454">
-                    <p class="help-text">Default Art-Net port is 6454</p>
+                <div class="interface-types">
+                    <div class="interface-option">
+                        <input type="radio" id="artnet-interface" name="interface_type" value="artnet" 
+                               {{ 'checked' if config.interface_type == 'artnet' else '' }}>
+                        <label for="artnet-interface">
+                            <strong>Art-Net</strong>
+                            <span class="interface-description">DMX over Ethernet/WiFi network</span>
+                        </label>
+                    </div>
+                    
+                    <div class="interface-option">
+                        <input type="radio" id="usb-interface" name="interface_type" value="usb_dmx"
+                               {{ 'checked' if config.interface_type == 'usb_dmx' else '' }}>
+                        <label for="usb-interface">
+                            <strong>USB-DMX</strong>
+                            <span class="interface-description">Direct USB connection to DMX interface</span>
+                        </label>
+                    </div>
                 </div>
-                
-                <div class="form-group">
-                    <label for="artnet-universe">Universe:</label>
-                    <input type="number" id="artnet-universe" name="universe" value="{{ config.universe }}" min="0" max="15">
-                    <p class="help-text">Art-Net universe (0-15)</p>
-                </div>
-                
-                <div class="form-group">
-                    <label for="refresh-rate">Refresh Rate:</label>
-                    <input type="number" id="refresh-rate" name="refresh_rate" value="{{ config.refresh_rate }}" min="1" max="44">
-                    <p class="help-text">Frames per second (1-44, recommended: 30)</p>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="submit" class="btn-primary">Save Network Settings</button>
-                </div>
-            </form>
+            </div>
+            
+            <!-- Art-Net Configuration -->
+            <div id="artnet-config" class="interface-config" style="display: {{ 'block' if config.interface_type == 'artnet' else 'none' }}">
+                <h3>Art-Net Configuration</h3>
+                <form id="artnet-form" class="setup-form">
+                    <div class="form-group">
+                        <label for="artnet-ip">Art-Net IP Address:</label>
+                        <input type="text" id="artnet-ip" name="artnet_ip" value="{{ config.artnet_ip }}" placeholder="255.255.255.255">
+                        <p class="help-text">Use 255.255.255.255 for broadcast, or a specific IP for unicast</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="artnet-port">Art-Net Port:</label>
+                        <input type="number" id="artnet-port" name="artnet_port" value="{{ config.artnet_port }}" placeholder="6454">
+                        <p class="help-text">Default Art-Net port is 6454</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="artnet-universe">Universe:</label>
+                        <input type="number" id="artnet-universe" name="universe" value="{{ config.universe }}" min="0" max="15">
+                        <p class="help-text">Art-Net universe (0-15)</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="refresh-rate">Refresh Rate:</label>
+                        <input type="number" id="refresh-rate" name="refresh_rate" value="{{ config.refresh_rate }}" min="1" max="44">
+                        <p class="help-text">Frames per second (1-44, recommended: 30)</p>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- USB-DMX Configuration -->
+            <div id="usb-config" class="interface-config" style="display: {{ 'block' if config.interface_type == 'usb_dmx' else 'none' }}">
+                <h3>USB-DMX Configuration</h3>
+                <form id="usb-form" class="setup-form">
+                    <div class="form-group">
+                        <label for="usb-port">USB Port:</label>
+                        <select id="usb-port" name="usb_port">
+                            <option value="auto" {{ 'selected' if config.usb_port == 'auto' else '' }}>Auto-detect</option>
+                        </select>
+                        <button type="button" id="refresh-ports" class="btn-secondary">Refresh Ports</button>
+                        <p class="help-text">Select your USB-DMX device port or use auto-detection</p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="usb-baud-rate">Baud Rate:</label>
+                        <select id="usb-baud-rate" name="usb_baud_rate">
+                            <option value="250000" {{ 'selected' if config.usb_baud_rate == 250000 else '' }}>250000 (Standard DMX)</option>
+                            <option value="115200" {{ 'selected' if config.usb_baud_rate == 115200 else '' }}>115200</option>
+                            <option value="57600" {{ 'selected' if config.usb_baud_rate == 57600 else '' }}>57600</option>
+                        </select>
+                        <p class="help-text">Standard DMX baud rate is 250000</p>
+                    </div>
+                    
+                    <div class="advanced-settings">
+                        <details>
+                            <summary>Advanced USB Settings</summary>
+                            
+                            <div class="form-group">
+                                <label for="usb-data-bits">Data Bits:</label>
+                                <select id="usb-data-bits" name="usb_data_bits">
+                                    <option value="8" {{ 'selected' if config.usb_data_bits == 8 else '' }}>8</option>
+                                    <option value="7" {{ 'selected' if config.usb_data_bits == 7 else '' }}>7</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="usb-stop-bits">Stop Bits:</label>
+                                <select id="usb-stop-bits" name="usb_stop_bits">
+                                    <option value="2" {{ 'selected' if config.usb_stop_bits == 2 else '' }}>2</option>
+                                    <option value="1" {{ 'selected' if config.usb_stop_bits == 1 else '' }}>1</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="usb-parity">Parity:</label>
+                                <select id="usb-parity" name="usb_parity">
+                                    <option value="N" {{ 'selected' if config.usb_parity == 'N' else '' }}>None</option>
+                                    <option value="E" {{ 'selected' if config.usb_parity == 'E' else '' }}>Even</option>
+                                    <option value="O" {{ 'selected' if config.usb_parity == 'O' else '' }}>Odd</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="usb-timeout">Timeout (seconds):</label>
+                                <input type="number" id="usb-timeout" name="usb_timeout" 
+                                       value="{{ config.usb_timeout }}" min="0.1" max="10" step="0.1">
+                            </div>
+                        </details>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="form-actions">
+                <button type="button" id="save-settings" class="btn-primary">Save Settings</button>
+                <button type="button" id="test-connection" class="btn-secondary">Test Connection</button>
+            </div>
         </div>
     </main>
 
