@@ -6,17 +6,10 @@
     "refresh_rate": 30,
     "fixtures": [
         {
-            "channel_count": 6,
-            "name": "P1",
+            "channel_count": 13,
+            "name": "Perf1",
             "start_channel": 1,
-            "type": "ShowTec LEDPAR 56",
-            "linked_to": null
-        },
-        {
-            "channel_count": 6,
-            "name": "P2",
-            "start_channel": 7,
-            "type": "ShowTec LEDPAR 56",
+            "type": "Performer 2000 - 13ch tour",
             "linked_to": null
         },
         {
@@ -153,12 +146,12 @@
                 255,
                 255,
                 255,
+                255,
                 0,
                 0,
                 0,
-                255,
-                255,
-                255,
+                0,
+                0,
                 0,
                 0,
                 0,
@@ -664,8 +657,7 @@
                 0
             ],
             "enabledFixtures": [
-                "P1",
-                "P2",
+                "Perf1",
                 "Perf2",
                 "Perf3",
                 "Perf4",
@@ -1203,8 +1195,7 @@
                 0
             ],
             "enabledFixtures": [
-                "P1",
-                "P2",
+                "Perf1",
                 "Perf2",
                 "Perf3",
                 "Perf4",
