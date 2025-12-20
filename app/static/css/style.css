@@ -71,6 +71,59 @@ nav ul li a.active {
     background-color: var(--primary-color);
 }
 
+/* Connection Status Indicator */
+.connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+}
+
+.status-indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    animation: pulse 2s infinite;
+}
+
+.status-indicator.connected {
+    background-color: var(--success-color);
+    box-shadow: 0 0 4px var(--success-color);
+}
+
+.status-indicator.disconnected {
+    background-color: var(--danger-color);
+    box-shadow: 0 0 4px var(--danger-color);
+    animation: pulse-fast 1s infinite;
+}
+
+.status-text {
+    font-size: 0.9rem;
+    color: white;
+    font-weight: 500;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.6;
+    }
+}
+
+@keyframes pulse-fast {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.4;
+    }
+}
+
 main {
     flex: 1;
     padding: 20px;
@@ -612,10 +665,6 @@ footer {
     text-align: center;
     padding: 20px;
     color: var(--grey-color);
-}
-
-
-    text-align: center;
 }
 
 /* Media queries for different screen sizes */

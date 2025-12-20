@@ -5,6 +5,8 @@ import json
 import os
 import time
 import threading
+import socket
+import sys
 from flask import current_app
 from stupidArtnet import StupidArtnet
 
@@ -22,6 +24,60 @@ target_dmx_values = bytearray(512)   # Target DMX values
 transition_active = False            # Whether a transition is in progress
 transition_start_time = 0            # When the transition started
 TRANSITION_DURATION = 3.0            # Transition duration in seconds
+
+# Connection status tracking
+connection_status = {
+    'connected': True,
+    'last_error_time': 0,
+    'error_message': None
+}
+
+# Monkey-patch StupidArtnet to silence socket error messages and track connection status
+_original_show = StupidArtnet.show
+
+def _patched_show(self):
+    """Patched show method that silences socket errors and tracks connection status"""
+    global connection_status
+    
+    packet = bytearray()
+    packet.extend(self.packet_header)
+    packet.extend(self.buffer)
+    
+    try:
+        self.socket_client.sendto(packet, (self.target_ip, self.port))
+        if self.if_sync:  # if we want to send artsync
+            self.send_artsync()
+        
+        # Update connection status on successful send
+        if not connection_status['connected']:
+            connection_status['connected'] = True
+            connection_status['error_message'] = None
+            # Log restoration when we have Flask app context
+            try:
+                current_app.logger.info("Art-Net connection restored")
+            except RuntimeError:
+                pass  # No app context yet
+                
+    except socket.error as error:
+        current_time = time.time()
+        
+        # Update connection status
+        was_connected = connection_status['connected']
+        connection_status['connected'] = False
+        connection_status['last_error_time'] = current_time
+        connection_status['error_message'] = str(error)
+        
+        # Only log once when connection is first lost (not repeatedly)
+        if was_connected:
+            try:
+                current_app.logger.warning(f"Art-Net connection lost: {error}")
+            except RuntimeError:
+                pass  # No app context yet
+    finally:
+        self.sequence = (self.sequence + 1) % 256
+
+# Apply the patch
+StupidArtnet.show = _patched_show
 
 def init_dmx_controller(app):
     """Initialize the DMX controller with application context"""
@@ -137,17 +193,15 @@ def dmx_thread_function():
                     interpolated = int(current_value + (target_value - current_value) * progress)
                     current_dmx_values[i] = interpolated
             
-
-            
             # Check if transition is complete
             if progress >= 1.0:
                 transition_active = False
                 for i in range(512):
-                    current_dmx_values[i] = target_dmx_values[i]# Ensure final values match targets exactly
+                    current_dmx_values[i] = target_dmx_values[i]  # Ensure final values match targets exactly
         
             # Apply updated values to DMX controller
             dmx_controller.set(current_dmx_values)
-        
+
 def activate_scene(scene_name):
     """Activate a lighting scene"""
     global active_scene, scenes, dmx_controller, highest_active_idx
@@ -235,6 +289,10 @@ def get_active_scene():
 def get_highest_active_idx():
     """Get the highest active DMX channel index"""
     return highest_active_idx
+
+def get_connection_status():
+    """Get the current Art-Net connection status"""
+    return connection_status.copy()
 
 def get_available_scenes():
     """Get list of available scenes"""

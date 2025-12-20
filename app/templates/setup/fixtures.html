@@ -9,12 +9,18 @@
 <body>
     <header>
         <h1>DMX Life</h1>
-        <nav>
-            <ul>
-                <li><a href="{{ url_for('main.index') }}">Scenes</a></li>
-                <li><a href="{{ url_for('setup.index') }}" class="active">Setup</a></li>
-            </ul>
-        </nav>
+        <div style="display: flex; align-items: center; gap: 20px;">
+            <nav>
+                <ul>
+                    <li><a href="{{ url_for('main.index') }}">Scenes</a></li>
+                    <li><a href="{{ url_for('setup.index') }}" class="active">Setup</a></li>
+                </ul>
+            </nav>
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-indicator" id="statusIndicator"></span>
+                <span class="status-text" id="statusText">Checking connection...</span>
+            </div>
+        </div>
     </header>
 
     <main>
@@ -98,6 +104,7 @@
         <p>DMX Life Controller &copy; {{ current_year }}</p>
     </footer>
 
+    <script src="{{ url_for('static', filename='js/connection-status.js') }}"></script>
     <script src="{{ url_for('static', filename='js/fixtures.js') }}"></script>
 </body>
 </html>
