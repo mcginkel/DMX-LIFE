@@ -4,7 +4,7 @@ Main views for the application
 from flask import Blueprint, render_template, jsonify, request, current_app
 from app import auth
 from app.dmx_controller import (
-    get_active_scene, get_available_scenes, activate_scene, current_dmx_values, 
+    get_active_scene, get_available_scenes, activate_scene, get_current_dmx_values,
     get_highest_active_idx, get_connection_status
 )
 
@@ -47,9 +47,10 @@ def dmx_values():
 
     highest_active_idx = get_highest_active_idx()
     active_scene = get_active_scene()
+    current_values = get_current_dmx_values()
 
     # Return all channels up to the highest active one, plus metadata
-    values = [int(v) for v in current_dmx_values[:highest_active_idx + 1]]
+    values = [int(v) for v in current_values[:highest_active_idx + 1]]
     
     return jsonify({
         'values': values,
