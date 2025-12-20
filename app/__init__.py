@@ -5,6 +5,21 @@ import os
 import json
 import datetime
 from flask import Flask
+from flask_httpauth import HTTPBasicAuth
+
+# Initialize HTTP Basic Auth
+auth = HTTPBasicAuth()
+
+# Hardcoded credentials
+ADMIN_USERNAME = "admin"
+ADMIN_PASSWORD = "banana123"
+
+@auth.verify_password
+def verify_password(username, password):
+    """Verify username and password"""
+    if username == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+        return username
+    return None
 
 def create_app(config=None):
     """Initialize and configure the Flask application"""

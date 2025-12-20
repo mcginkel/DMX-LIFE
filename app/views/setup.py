@@ -2,23 +2,27 @@
 Setup views for DMX configuration
 """
 from flask import Blueprint, render_template, jsonify, request, current_app
+from app import auth
 from app.dmx_controller import get_config, save_config, save_scene, delete_scene, test_scene
 from app.models.fixture import FixtureType
 
 setup_bp = Blueprint('setup', __name__)
 
 @setup_bp.route('/')
+@auth.login_required
 def index():
     """Setup main page"""
     return render_template('setup/index.html')
 
 @setup_bp.route('/network')
+@auth.login_required
 def network():
     """Art-Net network settings"""
     config = get_config()
     return render_template('setup/network.html', config=config)
 
 @setup_bp.route('/fixtures')
+@auth.login_required
 def fixtures():
     """DMX fixture configuration"""
     config = get_config()
@@ -28,6 +32,7 @@ def fixtures():
                           fixture_types=fixture_types)
 
 @setup_bp.route('/scenes')
+@auth.login_required
 def scenes():
     """Scene editor"""
     config = get_config()
@@ -36,11 +41,13 @@ def scenes():
 # API endpoints for setup
 
 @setup_bp.route('/api/config', methods=['GET'])
+@auth.login_required
 def get_config_endpoint():
     """Get current configuration"""
     return jsonify(get_config())
 
 @setup_bp.route('/api/config/network', methods=['POST'])
+@auth.login_required
 def update_network_config():
     """Update Art-Net network settings"""
     data = request.json
@@ -57,6 +64,7 @@ def update_network_config():
     return jsonify({'success': False, 'message': 'Failed to save network settings'}), 500
 
 @setup_bp.route('/api/config/fixtures', methods=['POST'])
+@auth.login_required
 def update_fixtures():
     """Update fixture configuration"""
     data = request.json
@@ -69,6 +77,7 @@ def update_fixtures():
     return jsonify({'success': False, 'message': 'Failed to save fixtures'}), 500
 
 @setup_bp.route('/api/config/scenes', methods=['POST'])
+@auth.login_required
 def save_scene_endpoint():
     """Create or update a scene"""
     data = request.json
@@ -92,6 +101,7 @@ def save_scene_endpoint():
     return jsonify({'success': False, 'message': 'Failed to save scene'}), 500
 
 @setup_bp.route('/api/config/scenes', methods=['DELETE'])
+@auth.login_required
 def delete_scene_endpoint():
     """ Delete a scene"""
     data = request.json
@@ -106,6 +116,7 @@ def delete_scene_endpoint():
 
 
 @setup_bp.route('/api/config/scenes/test', methods=['POST'])
+@auth.login_required
 def test_scene_endpoint():
     """test a scene"""
     data = request.json
@@ -120,6 +131,7 @@ def test_scene_endpoint():
     return jsonify({'success': False, 'message': 'Failed to save scene'}), 500
 
 @setup_bp.route('/api/fixture-types')
+@auth.login_required
 def get_fixture_types():
     """Get available fixture types"""
     return jsonify({
@@ -127,6 +139,7 @@ def get_fixture_types():
     })
 
 @setup_bp.route('/api/fixture-types/<fixture_type>')
+@auth.login_required
 def get_fixture_type_details(fixture_type):
     """Get channel details for a fixture type"""
     channels = FixtureType.get_channels(fixture_type)
