@@ -4,7 +4,8 @@ Main views for the application
 from flask import Blueprint, render_template, jsonify, request, current_app
 from app import auth
 from app.dmx_controller import (
-    get_active_scene, get_available_scenes, activate_scene, current_dmx_values, get_highest_active_idx
+    get_active_scene, get_available_scenes, activate_scene, current_dmx_values, 
+    get_highest_active_idx, get_connection_status
 )
 
 main_bp = Blueprint('main', __name__)
@@ -54,4 +55,15 @@ def dmx_values():
         'values': values,
         'highest_active': highest_active_idx,
         'active_scene': active_scene
+    })
+
+@main_bp.route('/api/connection/status')
+@auth.login_required
+def connection_status():
+    """API endpoint to get Art-Net connection status"""
+    status = get_connection_status()
+    return jsonify({
+        'connected': status['connected'],
+        'last_error_time': status['last_error_time'],
+        'error_message': status['error_message']
     })
