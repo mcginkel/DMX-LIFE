@@ -7,136 +7,143 @@
     "fixtures": [
         {
             "channel_count": 13,
+            "linked_to": null,
             "name": "Perf1",
             "start_channel": 1,
-            "type": "Performer 2000 - 13ch tour",
-            "linked_to": null
+            "type": "Performer 2000 - 13ch tour"
         },
         {
             "channel_count": 13,
+            "linked_to": null,
             "name": "Perf2",
             "start_channel": 14,
-            "type": "Performer 2000 - 13ch tour",
-            "linked_to": null
+            "type": "Performer 2000 - 13ch tour"
         },
         {
+            "channel_count": 13,
+            "linked_to": 2,
             "name": "Perf3",
-            "type": "Performer 2000 - 13ch tour",
             "start_channel": 27,
-            "channel_count": 13,
-            "linked_to": 2
+            "type": "Performer 2000 - 13ch tour"
         },
         {
+            "channel_count": 13,
+            "linked_to": 2,
             "name": "Perf4",
-            "type": "Performer 2000 - 13ch tour",
             "start_channel": 40,
-            "channel_count": 13,
-            "linked_to": 2
+            "type": "Performer 2000 - 13ch tour"
         },
         {
+            "channel_count": 13,
+            "linked_to": 2,
             "name": "Perf5",
-            "type": "Performer 2000 - 13ch tour",
             "start_channel": 53,
-            "channel_count": 13,
-            "linked_to": 2
+            "type": "Performer 2000 - 13ch tour"
         },
         {
-            "name": "Perf6",
-            "type": "Performer 2000 - 13ch tour",
-            "start_channel": 66,
             "channel_count": 13,
-            "linked_to": 2
+            "linked_to": 2,
+            "name": "Perf6",
+            "start_channel": 66,
+            "type": "Performer 2000 - 13ch tour"
         },
         {
             "channel_count": 4,
+            "linked_to": null,
             "name": "Par1",
             "start_channel": 79,
-            "type": "Compac Par 18 Tri",
-            "linked_to": null
+            "type": "Compac Par 18 Tri"
         },
         {
+            "channel_count": 4,
+            "linked_to": 7,
             "name": "Par2",
-            "type": "Compac Par 18 Tri",
             "start_channel": 83,
-            "channel_count": 4,
-            "linked_to": 7
+            "type": "Compac Par 18 Tri"
         },
         {
+            "channel_count": 4,
+            "linked_to": 7,
             "name": "Par3",
-            "type": "Compac Par 18 Tri",
             "start_channel": 87,
-            "channel_count": 4,
-            "linked_to": 7
+            "type": "Compac Par 18 Tri"
         },
         {
+            "channel_count": 4,
+            "linked_to": 7,
             "name": "Par4",
-            "type": "Compac Par 18 Tri",
             "start_channel": 91,
-            "channel_count": 4,
-            "linked_to": 7
+            "type": "Compac Par 18 Tri"
         },
         {
+            "channel_count": 4,
+            "linked_to": 7,
             "name": "Par5",
-            "type": "Compac Par 18 Tri",
             "start_channel": 95,
-            "channel_count": 4,
-            "linked_to": 7
+            "type": "Compac Par 18 Tri"
         },
         {
+            "channel_count": 4,
+            "linked_to": 7,
             "name": "Par6",
-            "type": "Compac Par 18 Tri",
             "start_channel": 99,
-            "channel_count": 4,
-            "linked_to": 7
+            "type": "Compac Par 18 Tri"
         },
         {
+            "channel_count": 4,
+            "linked_to": 7,
             "name": "Par7",
-            "type": "Compac Par 18 Tri",
             "start_channel": 103,
-            "channel_count": 4,
-            "linked_to": 7
+            "type": "Compac Par 18 Tri"
         },
         {
-            "name": "Par8",
-            "type": "Compac Par 18 Tri",
-            "start_channel": 107,
             "channel_count": 4,
-            "linked_to": 7
+            "linked_to": 7,
+            "name": "Par8",
+            "start_channel": 107,
+            "type": "Compac Par 18 Tri"
         },
         {
             "channel_count": 3,
+            "linked_to": null,
             "name": "Tribar1",
             "start_channel": 111,
-            "type": "RGB",
-            "linked_to": null
+            "type": "RGB"
         },
         {
             "channel_count": 3,
+            "linked_to": null,
             "name": "Tribar2",
             "start_channel": 114,
-            "type": "RGB",
-            "linked_to": null
+            "type": "RGB"
         },
         {
+            "channel_count": 3,
+            "linked_to": 15,
             "name": "Tribar3",
-            "type": "RGB",
             "start_channel": 117,
-            "channel_count": 3,
-            "linked_to": 15
+            "type": "RGB"
         },
         {
+            "channel_count": 3,
+            "linked_to": 16,
             "name": "Tribar4",
-            "type": "RGB",
             "start_channel": 120,
-            "channel_count": 3,
-            "linked_to": 16
+            "type": "RGB"
         },
         {
-            "channel_count": 3,
-            "name": "Sfeer",
-            "start_channel": 123,
+            "name": "Sfeer Links",
             "type": "RGB",
+            "start_channel": 123,
+            "channel_count": 3,
             "linked_to": null
+        },
+        {
+            "name": "Sfeer rechts",
+            "type": "RGB",
+            "start_channel": 126,
+            "channel_count": 3,
+            "linked_to": 18
         }
     ],
     "scenes": [
@@ -268,9 +275,9 @@
                 255,
                 255,
                 255,
-                0,
-                0,
-                0,
+                255,
+                255,
+                255,
                 0,
                 0,
                 0,
@@ -675,7 +682,8 @@
                 "Tribar2",
                 "Tribar3",
                 "Tribar4",
-                "Sfeer"
+                "Sfeer Links",
+                "Sfeer rechts"
             ]
         },
         {
@@ -1213,7 +1221,8 @@
                 "Tribar2",
                 "Tribar3",
                 "Tribar4",
-                "Sfeer"
+                "Sfeer Links",
+                "Sfeer rechts"
             ]
         },
         {
