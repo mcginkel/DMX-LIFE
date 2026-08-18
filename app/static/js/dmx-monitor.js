@@ -238,7 +238,9 @@ function initDmxMonitor() {
                     
                     updateDmxVisualizer(data.values);
                     
-                    activeSceneElement.textContent = data.active_scene || 'None';
+                    activeSceneElement.textContent = (data.active_scenes && data.active_scenes.length)
+                        ? data.active_scenes.join(', ')
+                        : 'None';
                     // Remove loading class after first successful load
                     monitorElement.classList.remove('loading');
                 }

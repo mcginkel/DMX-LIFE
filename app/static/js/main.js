@@ -3,18 +3,19 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Get all scene buttons
     const sceneButtons = document.querySelectorAll('.scene-button');
-    
+
     // Add click handlers to scene buttons
     sceneButtons.forEach(button => {
         button.addEventListener('click', function() {
             const sceneName = this.getAttribute('data-scene');
-            activateScene(sceneName);
+            toggleScene(sceneName);
         });
     });
-    
-    // Function to activate a scene
-    function activateScene(sceneName) {
-        // Call the API to activate the scene
+
+    // Function to toggle a scene on/off. The server rebuilds the DMX buffer
+    // from every currently active scene and returns the full active list, so
+    // the UI just mirrors that list rather than guessing locally.
+    function toggleScene(sceneName) {
         fetch('/api/scenes/activate', {
             method: 'POST',
             headers: {
@@ -25,12 +26,9 @@ document.addEventListener('DOMContentLoaded', function() {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Update UI to show active scene
+                const activeScenes = new Set(data.active_scenes || []);
                 sceneButtons.forEach(btn => {
-                    btn.classList.remove('active');
-                    if (btn.getAttribute('data-scene') === sceneName) {
-                        btn.classList.add('active');
-                    }
+                    btn.classList.toggle('active', activeScenes.has(btn.getAttribute('data-scene')));
                 });
             } else {
                 alert('Failed to activate scene: ' + data.message);

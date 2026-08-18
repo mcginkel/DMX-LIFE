@@ -29,7 +29,7 @@ def create_app(config=None):
     app.config.update(
         SECRET_KEY=os.urandom(24),
         CONFIG_FILE=os.path.join(os.path.dirname(__file__), 'config.json'),
-        MAX_SCENES=10
+        MAX_SCENES=40
     )
     
     # Add context processors for templates

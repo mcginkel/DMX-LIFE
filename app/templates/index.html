@@ -26,18 +26,36 @@
     <main>
         <div class="scene-container">
             <h2>Light Scenes</h2>
-            
-            <div class="scene-grid">
-                {% if scenes %}
-                    {% for scene in scenes %}
-                    <div class="scene-button {% if scene == active_scene %}active{% endif %}" data-scene="{{ scene }}">
-                        <div class="scene-name">{{ scene }}</div>
+
+            {% if groups or extra_scenes %}
+                {% for group_key, group_label, scene_names in groups %}
+                <div class="scene-group" data-group="{{ group_key }}">
+                    <h3 class="scene-group-title">{{ group_label }}</h3>
+                    <div class="scene-grid">
+                        {% for scene in scene_names %}
+                        <div class="scene-button {% if scene in active_scenes %}active{% endif %}" data-scene="{{ scene }}" data-group="{{ group_key }}">
+                            <div class="scene-name">{{ scene }}</div>
+                        </div>
+                        {% endfor %}
                     </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="no-scenes">No scenes configured yet. Go to <a href="{{ url_for('setup.scenes') }}">Scene Setup</a> to create scenes.</p>
+                </div>
+                {% endfor %}
+
+                {% if extra_scenes %}
+                <div class="scene-group scene-group-extra">
+                    <h3 class="scene-group-title">Extra</h3>
+                    <div class="scene-grid">
+                        {% for scene in extra_scenes %}
+                        <div class="scene-button scene-button-extra {% if scene in active_scenes %}active{% endif %}" data-scene="{{ scene }}" data-group="extra">
+                            <div class="scene-name">{{ scene }}</div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
                 {% endif %}
-            </div>
+            {% else %}
+                <p class="no-scenes">No scenes configured yet. Go to <a href="{{ url_for('setup.scenes') }}">Scene Setup</a> to create scenes.</p>
+            {% endif %}
         </div>
 
         <!-- Show Monitor Button - Visible on larger screens only -->

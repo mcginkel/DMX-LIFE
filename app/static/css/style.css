@@ -148,6 +148,33 @@ footer {
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
 }
 
+.scene-group {
+    margin-top: 25px;
+}
+
+.scene-group:first-child {
+    margin-top: 10px;
+}
+
+.scene-group-title {
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--grey-color);
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 8px;
+}
+
+.scene-group-extra {
+    border-top: 2px dashed var(--border-color);
+    padding-top: 15px;
+}
+
+.scene-button-extra.active {
+    border-color: var(--warning-color);
+    background-color: rgba(251, 197, 49, 0.15);
+}
+
 .scene-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -156,7 +183,7 @@ footer {
 }
 
 .scene-button {
-    aspect-ratio: 1/1;
+    aspect-ratio: 3/1;
     background-color: var(--light-color);
     border: 2px solid var(--border-color);
     border-radius: 8px;

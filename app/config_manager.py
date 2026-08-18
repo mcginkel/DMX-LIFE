@@ -99,24 +99,25 @@ class ConfigManager:
         config = self.read()
         return config.get('scenes', [])
     
-    def save_scene(self, name, channels, enabled_fixtures=None):
+    def save_scene(self, name, channels, enabled_fixtures=None, group=None):
         """Save or update a scene"""
         try:
             config = self.read()
             scenes = config.get('scenes', [])
-            
+
             # Check if scene exists
             scene_index = None
             for i, scene in enumerate(scenes):
                 if scene['name'] == name:
                     scene_index = i
                     break
-            
+
             # Create scene data
             scene_data = {
                 'name': name,
                 'channels': channels,
-                'enabledFixtures': enabled_fixtures if enabled_fixtures is not None else []
+                'enabledFixtures': enabled_fixtures if enabled_fixtures is not None else [],
+                'group': group
             }
             
             # Update or append

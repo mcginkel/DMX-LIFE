@@ -86,8 +86,9 @@ def save_scene_endpoint():
     
     # Get enabled fixtures (optional)
     enabled_fixtures = data.get('enabledFixtures', None)
-    
-    success = save_scene(data['name'], data['channels'], enabled_fixtures)
+    group = data.get('group', None)
+
+    success = save_scene(data['name'], data['channels'], enabled_fixtures, group)
     if success:
         return jsonify({'success': True})
     

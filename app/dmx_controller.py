@@ -69,24 +69,26 @@ def init_dmx_controller(app):
 # Scene management functions (backward compatible API)
 
 def activate_scene(scene_name):
-    """Activate a lighting scene with smooth transition"""
+    """Toggle a lighting scene on/off with smooth transition.
+
+    The DMX buffer is fully rebuilt from all currently active scenes each
+    time, so turning a scene off correctly reveals whatever other active
+    scenes still define for its channels (or 0 if nothing else does).
+    Returns (success, active_scene_names).
+    """
     if not scene_manager or not dmx_controller:
         if current_app:
             current_app.logger.error("DMX system not initialized")
-        return False
-    
-    # Build DMX buffer for the scene
-    buffer, success = scene_manager.build_dmx_buffer(
-        scene_name, 
-        dmx_controller.target_values
-    )
-    
+        return False, []
+
+    buffer, success, active_scenes = scene_manager.toggle_scene(scene_name)
+
     if not success:
-        return False
-    
+        return False, active_scenes
+
     # Activate with smooth transition
     dmx_controller.set_with_transition(buffer)
-    return True
+    return True, active_scenes
 
 
 def test_scene(channels):
@@ -108,10 +110,17 @@ def test_scene(channels):
 
 
 def get_active_scene():
-    """Get the currently active scene"""
+    """Get the most recently activated scene (backward compatible)"""
     if not scene_manager:
         return None
     return scene_manager.get_active_scene()
+
+
+def get_active_scenes():
+    """Get the list of all currently active scene names"""
+    if not scene_manager:
+        return []
+    return scene_manager.get_active_scenes()
 
 
 def get_highest_active_idx():
@@ -128,16 +137,16 @@ def get_available_scenes():
     return scene_manager.get_available_scenes()
 
 
-def save_scene(name, channel_values, enabled_fixtures=None):
+def save_scene(name, channel_values, enabled_fixtures=None, group=None):
     """Save a new scene"""
     if not scene_manager:
         return False
-    
+
     # Check scene limit
     if len(scene_manager.scenes) >= current_app.config['MAX_SCENES'] and name not in scene_manager.scenes:
         return False
-    
-    return scene_manager.save_scene(name, channel_values, enabled_fixtures)
+
+    return scene_manager.save_scene(name, channel_values, enabled_fixtures, group)
 
 
 def delete_scene(name):
