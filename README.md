@@ -40,30 +40,43 @@ DMX Life is a simple web-based application for controlling DMX lighting fixtures
    pip install -r requirements.txt
    ```
 
-4. Run the application:
+4. Set operator credentials. `start.sh` binds the server to all network
+   interfaces (`0.0.0.0`) so devices on the venue network can reach it, and
+   the application refuses to start that way without credentials configured:
+   ```bash
+   cp .env.example .env
+   # edit .env and set DMXLIFE_USERNAME / DMXLIFE_PASSWORD
+   ```
+   `.env` is gitignored and stays on this machine only.
+
+   For local development on `127.0.0.1` only, this step can be skipped — the
+   application falls back to development credentials (`admin` / `banana123`)
+   and warns that it's doing so. That fallback only ever applies on loopback;
+   it is refused outright on any other bind address.
+
+5. Run the application:
    ```bash
    ./start.sh
    ```
-   
-   Or manually:
+
+   Or manually (binds to loopback only, so `.env` isn't required):
    ```bash
    source venv/bin/activate
    python app.py
    ```
 
-5. Stop the application:
+6. Stop the application:
    ```bash
    ./stop.sh
    ```
 
-6. Open a web browser and navigate to:
+7. Open a web browser and navigate to:
    ```
    http://localhost:5050
    ```
-   
-   Default credentials:
-   - Username: `admin`
-   - Password: `banana123`
+
+   Sign in with the credentials set in `.env` (or the development defaults, if
+   running on loopback without one).
 
 ## Setup Instructions
 
