@@ -178,3 +178,7 @@ backups/
 
 # macOS
 .DS_Store
+
+# Runtime config backup/temp files (ConfigManager.write's atomic-write scratch state)
+app/config.json.bak
+app/config.json.tmp

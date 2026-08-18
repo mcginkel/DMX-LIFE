@@ -32,17 +32,63 @@ class ConfigManager:
         try:
             with open(self.config_file, 'r') as f:
                 return json.load(f)
+        except json.JSONDecodeError as e:
+            backup_path = f"{self.config_file}.bak"
+            message = f"Configuration file '{self.config_file}' is not valid JSON: {e}."
+            if os.path.exists(backup_path):
+                message += (
+                    f" A previous version is available at '{backup_path}' and can be "
+                    f"restored by copying it over '{self.config_file}'."
+                )
+            else:
+                message += " No backup is available to restore from."
+            if current_app:
+                current_app.logger.error(message)
+            raise RuntimeError(message) from e
         except Exception as e:
             if current_app:
                 current_app.logger.error(f"Error reading configuration: {e}")
             raise
-    
+
     def write(self, config):
-        """Write the entire configuration file"""
+        """
+        Write the entire configuration file atomically.
+
+        Serialises to a temporary file in the same directory, fsyncs it so
+        the content is durable, moves any existing file aside as a backup,
+        then atomically replaces the target with the new content. A reader
+        never observes a partial or empty file: at every point it is either
+        the complete previous version or the complete new one.
+        """
+        tmp_path = f"{self.config_file}.tmp"
+        backup_path = f"{self.config_file}.bak"
+        had_previous = os.path.exists(self.config_file)
+
         try:
-            with open(self.config_file, 'w') as f:
+            with open(tmp_path, 'w') as f:
                 json.dump(config, f, indent=4)
+                f.flush()
+                os.fsync(f.fileno())
+
+            if had_previous:
+                os.replace(self.config_file, backup_path)
+
+            try:
+                os.replace(tmp_path, self.config_file)
+            except Exception:
+                # The rename that makes the new content visible failed after
+                # the previous version was already moved aside. Put it back
+                # so the target is never left missing.
+                if had_previous:
+                    os.replace(backup_path, self.config_file)
+                raise
+
         except Exception as e:
+            if os.path.exists(tmp_path):
+                try:
+                    os.remove(tmp_path)
+                except OSError:
+                    pass
             if current_app:
                 current_app.logger.error(f"Error writing configuration: {e}")
             raise
