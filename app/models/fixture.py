@@ -2,8 +2,6 @@
 Models for DMX fixtures and scenes
 """
 
-from flask.cli import F
-
 
 class Fixture:
     """Represents a DMX fixture"""

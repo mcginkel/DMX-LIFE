@@ -163,7 +163,7 @@ python app.py     # Runs on port 5050 (not 5000!)
 
 ## Common Pitfalls
 
-- **Don't modify `lib/`, `routes/`, `views/` folders**: These are legacy/unused directories from earlier design iterations
+- **`lib/` and `routes/` don't exist** in this codebase — don't create them or assume code lives there. `app/views/` is live, actively-maintained code (the Flask blueprints), not legacy.
 - **Config reload**: After saving to `config.json` via ConfigManager, call `scene_manager.load_scenes()` or `dmx_controller.reconfigure()` as needed
 - **Thread safety**: Only modify `target_values` from main thread; DMX thread reads it for interpolation
 - **Fixture index shifts**: When deleting fixtures, manually update `linked_to` indices and `enabledFixtures` in all scenes (not currently automated)
