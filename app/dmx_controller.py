@@ -97,13 +97,27 @@ def test_scene(channels):
         if current_app:
             current_app.logger.error("DMX controller not initialized")
         return False
-    
-    # Convert channels list to buffer
+
+    if not isinstance(channels, list):
+        if current_app:
+            current_app.logger.error("test_scene expects a list of channel values")
+        return False
+
+    # Convert channels list to buffer. Values are validated here as well as at
+    # the API boundary so that a bad call cannot raise from the assignment
+    # below; bool is excluded because it is a subclass of int.
     buffer = bytearray(512)
     for channel, value in enumerate(channels):
-        if 0 <= channel < 512:
-            buffer[channel] = value
-    
+        if channel >= 512:
+            break
+        if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 255:
+            if current_app:
+                current_app.logger.error(
+                    f"test_scene rejected invalid value at channel {channel + 1}: {value!r}"
+                )
+            return False
+        buffer[channel] = value
+
     # Set immediately
     dmx_controller.set_immediate(buffer)
     return True

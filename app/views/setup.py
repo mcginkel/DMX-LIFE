@@ -8,6 +8,36 @@ from app.models.fixture import FixtureType
 
 setup_bp = Blueprint('setup', __name__)
 
+# Request validation helpers
+
+
+def get_json_object():
+    """Return the request body as a dict, or None if absent or not an object"""
+    data = request.get_json(silent=True)
+    if not isinstance(data, dict):
+        return None
+    return data
+
+
+def find_invalid_channel(channels):
+    """
+    Check that channels is a list of integers in 0-255.
+
+    Returns None if valid, otherwise a message naming the problem. Booleans are
+    rejected explicitly because bool is a subclass of int in Python.
+    """
+    if not isinstance(channels, list):
+        return 'Channels must be a list'
+
+    for index, value in enumerate(channels):
+        if isinstance(value, bool) or not isinstance(value, int):
+            return f'Channel {index + 1} is not an integer'
+        if not 0 <= value <= 255:
+            return f'Channel {index + 1} is out of range (0-255)'
+
+    return None
+
+
 @setup_bp.route('/')
 @auth.login_required
 def index():
@@ -52,14 +82,35 @@ def get_config_endpoint():
 @auth.login_required
 def update_network_config():
     """Update Art-Net network settings"""
-    data = request.json
-    network_config = {
-        'artnet_ip': data.get('artnet_ip', '255.255.255.255'),
-        'artnet_port': int(data.get('artnet_port', 6454)),
-        'universe': int(data.get('universe', 0)),
-        'refresh_rate': int(data.get('refresh_rate', 30))
+    data = get_json_object()
+    if data is None:
+        return jsonify({'success': False, 'message': 'JSON body required'}), 400
+
+    artnet_ip = data.get('artnet_ip', '255.255.255.255')
+    if not isinstance(artnet_ip, str) or not artnet_ip.strip():
+        return jsonify({'success': False, 'message': 'Art-Net IP address is required'}), 400
+
+    # Parse the numeric settings defensively; nothing is saved unless all of
+    # them are valid, so a bad value cannot leave configuration half-updated.
+    numeric_settings = {
+        'artnet_port': (data.get('artnet_port', 6454), 1, 65535),
+        'universe': (data.get('universe', 0), 0, 32767),
+        'refresh_rate': (data.get('refresh_rate', 30), 1, 60),
     }
-    
+
+    network_config = {'artnet_ip': artnet_ip.strip()}
+    for key, (raw, minimum, maximum) in numeric_settings.items():
+        try:
+            value = int(raw)
+        except (TypeError, ValueError):
+            return jsonify({'success': False, 'message': f'{key} must be a number'}), 400
+        if not minimum <= value <= maximum:
+            return jsonify({
+                'success': False,
+                'message': f'{key} must be between {minimum} and {maximum}'
+            }), 400
+        network_config[key] = value
+
     success = save_config(network_config)
     if success:
         return jsonify({'success': True})
@@ -82,10 +133,17 @@ def update_fixtures():
 @auth.login_required
 def save_scene_endpoint():
     """Create or update a scene"""
-    data = request.json
+    data = get_json_object()
+    if data is None:
+        return jsonify({'success': False, 'message': 'JSON body required'}), 400
+
     if not data.get('name') or 'channels' not in data:
         return jsonify({'success': False, 'message': 'Scene name and channels required'}), 400
-    
+
+    invalid = find_invalid_channel(data['channels'])
+    if invalid:
+        return jsonify({'success': False, 'message': invalid}), 400
+
     # Get enabled fixtures (optional)
     enabled_fixtures = data.get('enabledFixtures', None)
     group = data.get('group', None)
@@ -107,14 +165,18 @@ def save_scene_endpoint():
 @auth.login_required
 def delete_scene_endpoint():
     """ Delete a scene"""
-    data = request.json
-    if not data.get('name') not in data:
+    data = get_json_object()
+    if data is None:
+        return jsonify({'success': False, 'message': 'JSON body required'}), 400
+
+    name = data.get('name')
+    if not name:
         return jsonify({'success': False, 'message': 'Scene name required'}), 400
-    
-    success = delete_scene(data['name'])
+
+    success = delete_scene(name)
     if success:
         return jsonify({'success': True})
-    
+
     return jsonify({'success': False, 'message': 'Failed to delete scene'}), 500
 
 
@@ -122,16 +184,22 @@ def delete_scene_endpoint():
 @auth.login_required
 def test_scene_endpoint():
     """test a scene"""
-    data = request.json
+    data = get_json_object()
+    if data is None:
+        return jsonify({'success': False, 'message': 'JSON body required'}), 400
+
     if 'channels' not in data:
         return jsonify({'success': False, 'message': 'Channels required'}), 400
-    
+
+    invalid = find_invalid_channel(data['channels'])
+    if invalid:
+        return jsonify({'success': False, 'message': invalid}), 400
+
     success = test_scene(data['channels'])
     if success:
         return jsonify({'success': True})
-    
-    
-    return jsonify({'success': False, 'message': 'Failed to save scene'}), 500
+
+    return jsonify({'success': False, 'message': 'Failed to test scene'}), 500
 
 @setup_bp.route('/api/fixture-types')
 @auth.login_required
