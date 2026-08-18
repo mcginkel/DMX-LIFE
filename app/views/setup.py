@@ -43,8 +43,10 @@ def scenes():
 @setup_bp.route('/api/config', methods=['GET'])
 @auth.login_required
 def get_config_endpoint():
-    """Get current configuration"""
-    return jsonify(get_config())
+    """Get current configuration, plus the scene limit the editor enforces"""
+    config = dict(get_config())
+    config['MAX_SCENES'] = current_app.config['MAX_SCENES']
+    return jsonify(config)
 
 @setup_bp.route('/api/config/network', methods=['POST'])
 @auth.login_required
