@@ -34,13 +34,18 @@ Proposals, none implemented. Roughly in priority order:
 | Change | Why it matters |
 |---|---|
 | [secure-auth-and-debug](changes/secure-auth-and-debug/proposal.md) | Credentials are in a public repo; the Werkzeug debugger is reachable on the LAN |
-| [fix-request-validation](changes/fix-request-validation/proposal.md) | Four endpoints return 500 on bad input; the scene-delete guard never worked |
 | [atomic-config-writes](changes/atomic-config-writes/proposal.md) | An interrupted write can leave the whole show configuration unparseable |
 | [fix-fixture-link-references](changes/fix-fixture-link-references/proposal.md) | Stored fixture links are off by one, including two self-references |
 | [thread-safe-dmx-buffers](changes/thread-safe-dmx-buffers/proposal.md) | Buffers are shared between threads with no synchronisation |
 | [add-test-suite](changes/add-test-suite/proposal.md) | Nothing is tested automatically |
 | [remove-dead-code](changes/remove-dead-code/proposal.md) | ~500 lines nothing executes, including a whole superseded module |
 | [refresh-architecture-docs](changes/refresh-architecture-docs/proposal.md) | README and ARCHITECTURE.md describe behaviour that no longer exists |
+
+## Completed
+
+| Change | Landed |
+|---|---|
+| [fix-request-validation](changes/archive/2026-08-19-fix-request-validation/proposal.md) | 2026-08-19 — four endpoints returned 500 on bad input; the scene-delete guard never worked |
 
 ## Using the CLI
 
