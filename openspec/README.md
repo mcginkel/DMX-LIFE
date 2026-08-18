@@ -33,7 +33,6 @@ Proposals, none implemented. Roughly in priority order:
 
 | Change | Why it matters |
 |---|---|
-| [secure-auth-and-debug](changes/secure-auth-and-debug/proposal.md) | Credentials are in a public repo; the Werkzeug debugger is reachable on the LAN |
 | [atomic-config-writes](changes/atomic-config-writes/proposal.md) | An interrupted write can leave the whole show configuration unparseable |
 | [fix-fixture-link-references](changes/fix-fixture-link-references/proposal.md) | Stored fixture links are off by one, including two self-references |
 | [thread-safe-dmx-buffers](changes/thread-safe-dmx-buffers/proposal.md) | Buffers are shared between threads with no synchronisation |
@@ -45,6 +44,7 @@ Proposals, none implemented. Roughly in priority order:
 
 | Change | Landed |
 |---|---|
+| [secure-auth-and-debug](changes/archive/2026-08-19-secure-auth-and-debug/proposal.md) | 2026-08-19 — credentials and the debugger now come from the environment, with a bind-address-based safety check |
 | [fix-request-validation](changes/archive/2026-08-19-fix-request-validation/proposal.md) | 2026-08-19 — four endpoints returned 500 on bad input; the scene-delete guard never worked |
 
 ## Using the CLI
