@@ -35,12 +35,12 @@ Proposals, none implemented. Roughly in priority order:
 | Change | Why it matters |
 |---|---|
 | [add-test-suite](changes/add-test-suite/proposal.md) | Nothing is tested automatically |
-| [refresh-architecture-docs](changes/refresh-architecture-docs/proposal.md) | README and ARCHITECTURE.md describe behaviour that no longer exists |
 
 ## Completed
 
 | Change | Landed |
 |---|---|
+| [refresh-architecture-docs](changes/archive/2026-08-19-refresh-architecture-docs/proposal.md) | 2026-08-19 — README/ARCHITECTURE.md/SUMMARY.md/copilot-instructions.md corrected; ARCHITECTURE.md shrunk 570→147 lines to an orientation doc pointing at docs/adr/ and openspec/specs/ |
 | [thread-safe-dmx-buffers](changes/archive/2026-08-19-thread-safe-dmx-buffers/proposal.md) | 2026-08-19 — a single lock now guards the DMX buffers so every transmitted frame is one composition, never a mixture of two |
 | [fix-fixture-link-references](changes/archive/2026-08-19-fix-fixture-link-references/proposal.md) | 2026-08-19 — fixture links now identify their master by name instead of array position; repaired the off-by-one data and added server-side validation |
 | [atomic-config-writes](changes/archive/2026-08-19-atomic-config-writes/proposal.md) | 2026-08-19 — config.json is written via a temp file + atomic rename instead of truncate-in-place; new configuration-persistence capability |
