@@ -7,7 +7,8 @@
 
 Snapping instantly from one lighting state to another looks abrupt and
 amateurish in a live room. Scene changes need to fade. The original design
-brief (`design/prompt.txt`) called for a 2-second transition.
+brief (formerly `design/prompt.txt`, later removed from the working tree —
+see git history) called for a 2-second transition.
 
 The operator also needs a way to preview a scene while editing it, where a fade
 would just get in the way of judging the result.

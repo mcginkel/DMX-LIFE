@@ -1,7 +1,7 @@
 # DMX Life - Architecture Overview
 
 This is an orientation map, not a reference manual. For **why** something is
-built the way it is, see [`docs/adr/`](../docs/adr/) — each decision with its
+built the way it is, see [`docs/adr/`](adr/) — each decision with its
 trade-offs reasoned through. For **what the system does**, in testable terms,
 see [`openspec/specs/`](../openspec/specs/). This document exists to help a
 reader find their way into the code; it deliberately doesn't duplicate either
@@ -28,12 +28,12 @@ of those.
                                 └─► StupidArtnet (Art-Net protocol)
 ```
 
-Why this layering exists: [ADR-0012](../docs/adr/0012-app-factory-with-module-singletons.md).
+Why this layering exists: [ADR-0012](adr/0012-app-factory-with-module-singletons.md).
 
 ## Components
 
 - **ConfigManager** (`app/config_manager.py`) — all `config.json` I/O.
-  `read()` / `write()` (atomic, temp-file + rename — [ADR-0001](../docs/adr/0001-json-file-as-system-of-record.md)),
+  `read()` / `write()` (atomic, temp-file + rename — [ADR-0001](adr/0001-json-file-as-system-of-record.md)),
   plus typed accessors (`get_fixtures()`, `get_scenes()`, `save_scene()`,
   `delete_scene()`, `get_network_settings()`...). `read()` also migrates
   legacy positional fixture links to name references on the fly
@@ -44,9 +44,9 @@ Why this layering exists: [ADR-0012](../docs/adr/0012-app-factory-with-module-si
   `toggle_scene(name)` adds or removes a scene from the active layer set and
   rebuilds the full 512-channel frame from every remaining active layer, in
   activation order. `get_active_scenes()` returns that set.
-  See [ADR-0005](../docs/adr/0005-layered-scene-state.md) (layering),
-  [ADR-0006](../docs/adr/0006-scene-groups.md) (exclusive vs. additive
-  groups), and [ADR-0007](../docs/adr/0007-sparse-overlay-via-empty-enabled-fixtures.md)
+  See [ADR-0005](adr/0005-layered-scene-state.md) (layering),
+  [ADR-0006](adr/0006-scene-groups.md) (exclusive vs. additive
+  groups), and [ADR-0007](adr/0007-sparse-overlay-via-empty-enabled-fixtures.md)
   (the `enabledFixtures` sparse-overlay distinction).
 
 - **DMXController** (`app/dmx_controller_class.py`) — Art-Net output.
@@ -56,9 +56,9 @@ Why this layering exists: [ADR-0012](../docs/adr/0012-app-factory-with-module-si
   lock guards `current_values`/`target_values`/the transition flag together,
   so every transmitted frame is one composition, never a mix of two; the
   socket send itself happens outside the lock so an unreachable node can't
-  stall a writer. See [ADR-0002](../docs/adr/0002-artnet-via-direct-socket-sends.md),
-  [ADR-0003](../docs/adr/0003-continuous-dmx-output-thread.md),
-  [ADR-0004](../docs/adr/0004-fixed-linear-crossfade.md), and the
+  stall a writer. See [ADR-0002](adr/0002-artnet-via-direct-socket-sends.md),
+  [ADR-0003](adr/0003-continuous-dmx-output-thread.md),
+  [ADR-0004](adr/0004-fixed-linear-crossfade.md), and the
   [`thread-safe-dmx-buffers`](../openspec/changes/archive/2026-08-19-thread-safe-dmx-buffers/)
   change for the locking specifically.
 
@@ -79,7 +79,7 @@ Why this layering exists: [ADR-0012](../docs/adr/0012-app-factory-with-module-si
 
 Server-rendered Jinja templates, one vanilla-JS file per page
 (`app/static/js/`), no build step, no shared client state
-([ADR-0011](../docs/adr/0011-server-rendered-vanilla-frontend.md)). On the
+([ADR-0011](adr/0011-server-rendered-vanilla-frontend.md)). On the
 main scene page, `main.js` mirrors whatever active-scene list the server
 returns rather than tracking state itself — the highlighted buttons are
 always a direct reflection of the server's layer set.
@@ -143,5 +143,5 @@ errors.
 **A scene toggle didn't do what I expected**
 Remember scenes are layers, not a single active scene — check
 `GET /api/dmx/values` for the current `active_scenes` list, and see
-[ADR-0005](../docs/adr/0005-layered-scene-state.md) for how layering resolves
+[ADR-0005](adr/0005-layered-scene-state.md) for how layering resolves
 conflicting channels (last-activated wins).

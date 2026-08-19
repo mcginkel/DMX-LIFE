@@ -3,7 +3,7 @@
 ## Project Overview
 DMX Life is a Flask web application for controlling DMX lighting fixtures via Art-Net protocol. Users create lighting scenes with selective fixture control and activate them through a simple web interface.
 
-**Design Philosophy**: Built for non-technical users with focus on simplicity and intuitive controls. See `design/prompt.txt` for original requirements, `docs/adr/` for why later decisions were made, and `openspec/specs/` for what the system does today, in testable terms.
+**Design Philosophy**: Built for non-technical users with focus on simplicity and intuitive controls. See `docs/adr/` for why decisions were made, and `openspec/specs/` for what the system does today, in testable terms. (The original design brief lived at `design/prompt.txt`; it was later removed from the working tree - still recoverable via `git log --all --full-history -- design/prompt.txt` if needed.)
 
 ## Architecture
 
@@ -212,7 +212,8 @@ python app.py     # Runs on port 5050 (not 5000!)
 
 ## Design Decisions vs Implementation
 
-Some implementation details differ from original spec (`design/prompt.txt`):
+Some implementation details differ from the original design brief (formerly
+`design/prompt.txt`, later removed - see git history):
 - **Transition duration**: 3 seconds (spec: 2 seconds) - provides smoother visual effect
 - **Test mode**: Immediately applies DMX without transitions for instant feedback
 - **Fixture linking**: Prevents circular dependencies by blocking master fixtures from being linked
@@ -238,5 +239,5 @@ go stale. When in doubt, or for anything not covered here:
   testable requirements
 - [`openspec/changes/`](../openspec/changes/) - proposed work not yet done;
   `openspec/changes/archive/` - what has already landed
-- [`design/ARCHITECTURE.md`](../design/ARCHITECTURE.md) - module map and
+- [`docs/ARCHITECTURE.md`](../docs/ARCHITECTURE.md) - module map and
   component responsibilities

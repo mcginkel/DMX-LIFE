@@ -49,6 +49,6 @@ template: Context → Decision → Consequences → Alternatives considered.
 
 - [`openspec/specs/`](../../openspec/specs/) — behavioural specifications
   (what the system does, in testable terms).
-- [`design/ARCHITECTURE.md`](../../design/ARCHITECTURE.md) — the original
-  architecture write-up. Parts of it are now out of date; where it disagrees
-  with these ADRs, the ADRs are correct.
+- [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md) — a module map and orientation
+  guide. It points into these ADRs for rationale rather than duplicating it,
+  so the two shouldn't disagree; if they ever do, the ADRs are correct.

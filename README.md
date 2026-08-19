@@ -197,8 +197,9 @@ DMX-LIFE/
 │   │   ├── css/
 │   │   └── js/
 │   └── templates/
-├── design/                      # Design documentation (orientation)
-├── docs/adr/                    # Architecture decision records
+├── docs/
+│   ├── ARCHITECTURE.md          # Module map & component orientation
+│   └── adr/                     # Architecture decision records
 ├── openspec/                    # Behavioural specs & change proposals
 ├── start.sh                     # Start server in background
 ├── stop.sh                      # Stop server
@@ -208,7 +209,7 @@ DMX-LIFE/
 
 ### Code Architecture
 
-See [`design/ARCHITECTURE.md`](design/ARCHITECTURE.md) for the module map and
+See [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the module map and
 component responsibilities, [`docs/adr/`](docs/adr/) for why things are built
 the way they are, and [`openspec/specs/`](openspec/specs/) for what the
 system does, in testable terms.
@@ -228,7 +229,7 @@ tail -f nohup.out
 
 ## Documentation
 
-- [`design/ARCHITECTURE.md`](design/ARCHITECTURE.md) — module map and component
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — module map and component
   responsibilities, an orientation guide rather than a full reference.
 - [`docs/adr/`](docs/adr/) — architecture decision records: what was decided,
   why, and what trade-off it costs. Start here for "why does it work this

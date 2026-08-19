@@ -34,6 +34,7 @@ Proposals, none implemented. Roughly in priority order:
 
 | Change | Why it matters |
 |---|---|
+| [add-pluggable-dmx-backends](changes/add-pluggable-dmx-backends/proposal.md) | Replaces StupidArtnet with our own Art-Net sender behind a `DMXBackend` interface, plus an Enttec DMX USB Pro backend — DMX output becomes configurable per installation instead of Art-Net-only |
 | [add-test-suite](changes/add-test-suite/proposal.md) | Nothing is tested automatically |
 
 ## Completed
