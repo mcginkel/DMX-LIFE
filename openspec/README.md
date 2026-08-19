@@ -35,6 +35,7 @@ Proposals, none implemented. Roughly in priority order:
 | Change | Why it matters |
 |---|---|
 | [add-pluggable-dmx-backends](changes/add-pluggable-dmx-backends/proposal.md) | Replaces StupidArtnet with our own Art-Net sender behind a `DMXBackend` interface, plus an Enttec DMX USB Pro backend — DMX output becomes configurable per installation instead of Art-Net-only |
+| [compact-scene-storage](changes/compact-scene-storage/proposal.md) | Scenes stored as a sparse `{channel: value}` map instead of a 512-entry array — config.json projected 186→61 KB, and retires the `enabledFixtures` dual-meaning wart (ADR-0007) in the same move |
 | [add-test-suite](changes/add-test-suite/proposal.md) | Nothing is tested automatically |
 
 ## Completed
