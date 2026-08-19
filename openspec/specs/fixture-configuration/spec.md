@@ -63,7 +63,8 @@ the fixture's channel footprint.
 
 The system SHALL allow a fixture to be linked to another fixture of the same
 type, designating that other fixture as its master, so that edits to the master
-propagate to its linked fixtures.
+propagate to its linked fixtures. The link SHALL identify the master by name, so
+that it remains correct when fixtures are added, removed or reordered.
 
 #### Scenario: Linked fixtures follow the master while editing
 
@@ -83,11 +84,15 @@ propagate to its linked fixtures.
   that already has fixtures linked to it
 - **THEN** the link is rejected
 
+#### Scenario: Links survive reordering
+
+- **WHEN** fixtures are added, removed or reordered
+- **THEN** existing links continue to reference the same master fixtures
+
 ### Requirement: Link maintenance on deletion
 
-When a fixture is deleted, the system SHALL clear links that pointed at it and
-SHALL adjust the stored references of fixtures whose position changed, so that
-no link points at the wrong fixture.
+When a fixture is deleted, the system SHALL clear links that referenced it, so
+that no link points at a fixture that no longer exists.
 
 #### Scenario: Links to a deleted fixture are cleared
 
@@ -97,8 +102,58 @@ no link points at the wrong fixture.
 #### Scenario: References are corrected after removal
 
 - **WHEN** a fixture earlier in the list is deleted
-- **THEN** links referring to fixtures after it are adjusted to keep pointing at
-  the same fixtures
+- **THEN** links between the remaining fixtures continue to reference the same
+  masters
+- **AND** no positional adjustment is required to achieve this
+
+### Requirement: Server-side link validation
+
+The system SHALL validate fixture links when they are saved, rejecting a link
+whose master does not exist, is the fixture itself, is of a different type, or is
+itself linked to another fixture.
+
+#### Scenario: Link to a non-existent fixture
+
+- **WHEN** a save request links a fixture to a master that does not exist
+- **THEN** the request is rejected with a client error
+
+#### Scenario: Self-link submitted directly to the API
+
+- **WHEN** a save request links a fixture to itself
+- **THEN** the request is rejected with a client error
+
+#### Scenario: Link forming a chain
+
+- **WHEN** a save request links a fixture to a master that is itself linked
+- **THEN** the request is rejected with a client error
+
+### Requirement: Unique fixture names
+
+The system SHALL require fixture names to be unique, so that a name
+unambiguously identifies one fixture.
+
+#### Scenario: Duplicate name rejected
+
+- **WHEN** a save request would result in two fixtures sharing a name
+- **THEN** the request is rejected with a client error
+
+### Requirement: Migration of positional link references
+
+The system SHALL accept configurations in which links are stored as positional
+indices, converting them to name references on load, and SHALL report any link
+it cannot resolve rather than silently discarding it.
+
+#### Scenario: Valid positional reference is converted
+
+- **WHEN** a stored link is an index pointing at a different fixture of the same
+  type
+- **THEN** it is converted to that fixture's name
+
+#### Scenario: Unresolvable reference is reported
+
+- **WHEN** a stored link cannot be resolved to a valid master
+- **THEN** the fixture is left unlinked
+- **AND** the system reports which fixture was affected
 
 ### Requirement: Channel conflict detection
 
