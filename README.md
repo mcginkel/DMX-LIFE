@@ -3,9 +3,9 @@
 DMX Life is a simple web-based application for controlling DMX lighting fixtures via Art-Net protocol over a network. The application allows you to:
 
 - Define DMX fixtures and their channel assignments
-- Create up to 10 lighting scenes
+- Create a configurable number of lighting scenes, organized into groups
 - Selectively enable/disable fixtures in each scene
-- Quickly switch between scenes with a simple interface
+- Layer scenes from different groups together, toggling each on and off independently
 
 ## Features
 
@@ -119,10 +119,22 @@ Create lighting scenes:
 
 ### 4. Scene Control
 
-Finally, use the main interface to activate your scenes:
-- Go to "Scenes" page
-- Click on any scene to activate it
-- Only enabled fixtures in that scene will respond
+Finally, use the main interface to activate your scenes. Scenes are organized
+into groups (which groups exist and their labels come from each scene's
+`group`, set when it was created):
+
+- **Exclusive groups** (e.g. a "main look" group, a "background colour"
+  group) — clicking a scene there replaces whichever scene in that same
+  group was active, so only one member of the group is ever active at once.
+- **Additive scenes** (no group, or a group that isn't exclusive) — these
+  layer on top of whatever else is active without displacing anything.
+
+Any active scene can be turned off again by clicking it a second time — the
+system rebuilds the DMX output from whatever scenes remain active, so turning
+one off correctly reveals what's underneath rather than leaving stale values
+or blacking out fixtures other scenes still claim. Only fixtures a scene
+enables are affected by it; everything else is left as other active scenes
+(or nothing) leave it.
 
 ### 5. DMX Monitor (Optional)
 
@@ -172,8 +184,8 @@ DMX-LIFE/
 ├── app/
 │   ├── __init__.py              # Flask app factory
 │   ├── config.json              # Configuration storage
-│   ├── config_manager.py        # Configuration file I/O
-│   ├── scene_manager.py         # Scene logic & buffer building
+│   ├── config_manager.py        # Configuration file I/O (atomic writes)
+│   ├── scene_manager.py         # Scene layering & DMX frame composition
 │   ├── dmx_controller_class.py  # DMX hardware control
 │   ├── dmx_controller.py        # Integration layer
 │   ├── models/
@@ -185,7 +197,9 @@ DMX-LIFE/
 │   │   ├── css/
 │   │   └── js/
 │   └── templates/
-├── design/                      # Design documentation
+├── design/                      # Design documentation (orientation)
+├── docs/adr/                    # Architecture decision records
+├── openspec/                    # Behavioural specs & change proposals
 ├── start.sh                     # Start server in background
 ├── stop.sh                      # Stop server
 ├── app.py                       # Application entry point
@@ -194,29 +208,10 @@ DMX-LIFE/
 
 ### Code Architecture
 
-The application follows a **modular architecture** with clear separation of concerns:
-
-1. **ConfigManager** (`config_manager.py`)
-   - Handles all JSON configuration file operations
-   - Methods: `read()`, `write()`, `update()`, `save_scene()`, `delete_scene()`
-   - No business logic, just data persistence
-
-2. **SceneManager** (`scene_manager.py`)
-   - Manages scene state and logic
-   - Builds DMX buffers based on enabled fixtures
-   - Tracks active scene and highest active channel
-
-3. **DMXController** (`dmx_controller_class.py`)
-   - Controls StupidArtnet hardware interface
-   - Manages background thread for continuous DMX output
-   - Implements smooth 3-second transitions via linear interpolation
-   - Provides immediate mode for scene testing
-   - Silently handles socket errors when Art-Net device unreachable
-
-4. **Integration Layer** (`dmx_controller.py`)
-   - Wires together ConfigManager, SceneManager, and DMXController
-   - Provides backward-compatible API for views
-   - Exports global instances for easy access
+See [`design/ARCHITECTURE.md`](design/ARCHITECTURE.md) for the module map and
+component responsibilities, [`docs/adr/`](docs/adr/) for why things are built
+the way they are, and [`openspec/specs/`](openspec/specs/) for what the
+system does, in testable terms.
 
 ### Running in Development
 
@@ -231,13 +226,17 @@ tail -f nohup.out
 ./stop.sh
 ```
 
-### Key Design Decisions
+## Documentation
 
-- **Port 5050**: Application runs on port 5050 (not Flask's default 5000)
-- **3-Second Transitions**: Provides smooth visual effect (original spec called for 2 seconds)
-- **Background DMX Thread**: Continuous output at ~30fps ensures stable lighting
-- **Silent Socket Errors**: StupidArtnet monkey-patched to suppress console spam when network unavailable
-- **Fixture Linking**: Prevents circular dependencies by blocking master fixtures from being linked
+- [`design/ARCHITECTURE.md`](design/ARCHITECTURE.md) — module map and component
+  responsibilities, an orientation guide rather than a full reference.
+- [`docs/adr/`](docs/adr/) — architecture decision records: what was decided,
+  why, and what trade-off it costs. Start here for "why does it work this
+  way" questions.
+- [`openspec/specs/`](openspec/specs/) — behavioural specifications: what the
+  system does, in testable scenarios. `openspec/changes/` holds proposals for
+  known gaps not yet addressed, and `openspec/changes/archive/` holds ones
+  already landed.
 
 ## License
 

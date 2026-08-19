@@ -81,8 +81,11 @@ DMX Life uses a **modular architecture** with clear separation of concerns:
 #### Key Technologies
 
 - **Flask Web Framework**: Powers the backend and web interface
-- **StupidArtnet Library**: Provides Art-Net protocol communication (monkey-patched for silent errors)
-- **HTTP Basic Auth**: Username/password protection (default: admin/banana123)
+- **StupidArtnet Library**: Provides Art-Net packet construction; the controller
+  bypasses its `show()`/threading and sends over its socket directly, so
+  errors can be handled and connection status tracked ([ADR-0002](../docs/adr/0002-artnet-via-direct-socket-sends.md))
+- **HTTP Basic Auth**: Username/password protection, configured via
+  `DMXLIFE_USERNAME`/`DMXLIFE_PASSWORD` (see `README.md`)
 - **Threading**: Background DMX output thread with smooth transitions
 - **JSON Configuration**: Single `config.json` file stores all settings
 
@@ -92,7 +95,8 @@ DMX Life uses a **modular architecture** with clear separation of concerns:
 - **Singleton Pattern**: Global DMX controller instance
 - **Separation of Concerns**: Each module has one clear responsibility
 - **Linear Interpolation**: Smooth transitions between scenes over 3 seconds
-- **Monkey Patching**: StupidArtnet.show() overridden to suppress socket errors
+- **Direct socket calls**: `_send_dmx_packet()` builds and sends the Art-Net
+  packet itself rather than calling into StupidArtnet's own send path
 
 ## Running the Application
 
@@ -116,10 +120,10 @@ DMX Life uses a **modular architecture** with clear separation of concerns:
    ```
    http://localhost:5050
    ```
-   
-   Default credentials:
-   - Username: `admin`
-   - Password: `banana123`
+
+   Sign in with the credentials configured via `DMXLIFE_USERNAME`/
+   `DMXLIFE_PASSWORD` (see `README.md`), or the loopback-only development
+   defaults if none are set.
 
 4. Setup Workflow:
    - First, configure network settings (Setup → Network Setup)
@@ -135,7 +139,6 @@ DMX Life uses a **modular architecture** with clear separation of concerns:
 ## Future Improvements
 
 - Additional fixture types and profiles
-- Scene grouping and categories
 - Scheduled scene activation
 - Scene transition effects (fade styles beyond linear)
 - Timeline-based scene sequencing
