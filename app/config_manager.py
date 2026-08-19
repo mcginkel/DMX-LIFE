@@ -31,7 +31,9 @@ class ConfigManager:
         """Read the entire configuration file"""
         try:
             with open(self.config_file, 'r') as f:
-                return json.load(f)
+                config = json.load(f)
+            self._migrate_fixture_links(config.get('fixtures', []))
+            return config
         except json.JSONDecodeError as e:
             backup_path = f"{self.config_file}.bak"
             message = f"Configuration file '{self.config_file}' is not valid JSON: {e}."
@@ -92,7 +94,101 @@ class ConfigManager:
             if current_app:
                 current_app.logger.error(f"Error writing configuration: {e}")
             raise
-    
+
+    def _migrate_fixture_links(self, fixtures):
+        """
+        Convert legacy positional `linked_to` indices to master fixture names,
+        in place. A config already using names is left untouched — this is
+        safe to call on every read.
+
+        Positional indices are fragile (ADR-0010): reordering, inserting or
+        deleting a fixture invalidates every link, and a shift that touches
+        the data but not the links produces self-references or chains that
+        the UI is supposed to make impossible but the stored data can still
+        contain. Repair proceeds in three passes:
+
+        1. Detect self-referential entries (`linked_to == own index`) and
+           compute their corrected target as `index - 1`, if that fixture
+           exists and is of the same type. This is the specific off-by-one
+           shape the known bad data takes.
+        2. Resolve every other integer `linked_to`. A raw value pointing at
+           a *self-referential* index is flattened straight to that entry's
+           corrected target, rather than to the buggy fixture itself — this
+           is what turns four fixtures that all raw-point at one broken
+           self-reference into four fixtures pointing at the one real
+           master, instead of a chain through the broken one.
+        3. Reject any resolution whose target is itself linked to something
+           else post-resolution: that is a chain, which the rest of this
+           change forbids. The fixture is left unlinked with a warning
+           rather than guessed at further.
+        """
+        self_correction = {}
+        for i, fixture in enumerate(fixtures):
+            if fixture.get('linked_to') == i:
+                candidate_index = i - 1
+                if (
+                    0 <= candidate_index < len(fixtures)
+                    and fixtures[candidate_index].get('type') == fixture.get('type')
+                ):
+                    self_correction[i] = candidate_index
+
+        conversions = []
+        resolved = {}  # fixture index -> resolved name or None, this pass only
+
+        for i, fixture in enumerate(fixtures):
+            linked_to = fixture.get('linked_to')
+            if not isinstance(linked_to, int):
+                continue  # already a name (or unlinked) - nothing to migrate
+
+            if linked_to == i:
+                target_index = self_correction.get(i)
+            elif linked_to in self_correction:
+                target_index = self_correction[linked_to]
+            else:
+                target_index = linked_to
+
+            resolved_name = None
+            if (
+                target_index is not None
+                and 0 <= target_index < len(fixtures)
+                and target_index != i
+                and fixtures[target_index].get('type') == fixture.get('type')
+            ):
+                resolved_name = fixtures[target_index]['name']
+
+            resolved[i] = resolved_name
+            conversions.append([fixture.get('name'), linked_to, resolved_name])
+
+        # Reject chains: a resolved target that is itself linked (to
+        # anything, old-style index or already-migrated name) can't be used.
+        for i, resolved_name in resolved.items():
+            if resolved_name is None:
+                continue
+            target = next((f for f in fixtures if f.get('name') == resolved_name), None)
+            if target is None:
+                continue
+            target_index = fixtures.index(target)
+            target_is_linked = (
+                target.get('linked_to') is not None
+                if target_index not in resolved
+                else resolved.get(target_index) is not None
+            )
+            if target_is_linked:
+                for row in conversions:
+                    if row[0] == fixtures[i]['name']:
+                        row[2] = None
+                resolved[i] = None
+
+        for i, resolved_name in resolved.items():
+            fixtures[i]['linked_to'] = resolved_name
+
+        if conversions and current_app:
+            lines = ["Migrated fixture links from positional indices to names:"]
+            for name, original_index, new_value in conversions:
+                outcome = f"'{new_value}'" if new_value else "unlinked (could not be resolved safely)"
+                lines.append(f"  {name}: index {original_index} -> {outcome}")
+            current_app.logger.warning("\n".join(lines))
+
     def update(self, **kwargs):
         """Update specific configuration keys"""
         try:

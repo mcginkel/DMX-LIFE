@@ -38,6 +38,53 @@ def find_invalid_channel(channels):
     return None
 
 
+def find_invalid_fixtures(fixtures):
+    """
+    Validate a fixture list before it is saved.
+
+    Names must be unique, since a link identifies its master by name. Any
+    link must name a different, existing fixture of the same type that is
+    not itself linked to something else - the last of these is what prevents
+    chains, which the editor's own rules also forbid but only in the browser.
+
+    Returns None if valid, otherwise a message naming the problem.
+    """
+    if not isinstance(fixtures, list):
+        return 'Fixtures must be a list'
+
+    seen_names = set()
+    for fixture in fixtures:
+        if not isinstance(fixture, dict) or not fixture.get('name'):
+            return 'Each fixture must have a name'
+        name = fixture['name']
+        if name in seen_names:
+            return f"Duplicate fixture name: '{name}'"
+        seen_names.add(name)
+
+    by_name = {fixture['name']: fixture for fixture in fixtures}
+
+    for fixture in fixtures:
+        linked_to = fixture.get('linked_to')
+        if linked_to is None:
+            continue
+
+        name = fixture['name']
+        if not isinstance(linked_to, str):
+            return f"'{name}' has an invalid link (expected a fixture name)"
+        if linked_to == name:
+            return f"'{name}' cannot be linked to itself"
+
+        master = by_name.get(linked_to)
+        if master is None:
+            return f"'{name}' is linked to unknown fixture '{linked_to}'"
+        if master.get('type') != fixture.get('type'):
+            return f"'{name}' cannot be linked to '{linked_to}' (different fixture type)"
+        if master.get('linked_to') is not None:
+            return f"'{name}' cannot be linked to '{linked_to}' because it is itself linked"
+
+    return None
+
+
 @setup_bp.route('/')
 @auth.login_required
 def index():
@@ -120,10 +167,17 @@ def update_network_config():
 @auth.login_required
 def update_fixtures():
     """Update fixture configuration"""
-    data = request.json
+    data = get_json_object()
+    if data is None:
+        return jsonify({'success': False, 'message': 'JSON body required'}), 400
+
     if 'fixtures' not in data:
         return jsonify({'success': False, 'message': 'No fixtures provided'}), 400
-    
+
+    invalid = find_invalid_fixtures(data['fixtures'])
+    if invalid:
+        return jsonify({'success': False, 'message': invalid}), 400
+
     success = save_config({'fixtures': data['fixtures']})
     if success:
         return jsonify({'success': True})

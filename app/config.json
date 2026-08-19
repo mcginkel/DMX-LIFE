@@ -21,28 +21,28 @@
         },
         {
             "channel_count": 13,
-            "linked_to": 2,
+            "linked_to": "Perf2",
             "name": "Perf3",
             "start_channel": 27,
             "type": "Performer 2000 - 13ch tour"
         },
         {
             "channel_count": 13,
-            "linked_to": 2,
+            "linked_to": "Perf2",
             "name": "Perf4",
             "start_channel": 40,
             "type": "Performer 2000 - 13ch tour"
         },
         {
             "channel_count": 13,
-            "linked_to": 2,
+            "linked_to": "Perf2",
             "name": "Perf5",
             "start_channel": 53,
             "type": "Performer 2000 - 13ch tour"
         },
         {
             "channel_count": 13,
-            "linked_to": 2,
+            "linked_to": "Perf2",
             "name": "Perf6",
             "start_channel": 66,
             "type": "Performer 2000 - 13ch tour"
@@ -56,49 +56,49 @@
         },
         {
             "channel_count": 4,
-            "linked_to": 7,
+            "linked_to": "Par1",
             "name": "Par2",
             "start_channel": 83,
             "type": "Compac Par 18 Tri"
         },
         {
             "channel_count": 4,
-            "linked_to": 7,
+            "linked_to": "Par1",
             "name": "Par3",
             "start_channel": 87,
             "type": "Compac Par 18 Tri"
         },
         {
             "channel_count": 4,
-            "linked_to": 7,
+            "linked_to": "Par1",
             "name": "Par4",
             "start_channel": 91,
             "type": "Compac Par 18 Tri"
         },
         {
             "channel_count": 4,
-            "linked_to": 7,
+            "linked_to": "Par1",
             "name": "Par5",
             "start_channel": 95,
             "type": "Compac Par 18 Tri"
         },
         {
             "channel_count": 4,
-            "linked_to": 7,
+            "linked_to": "Par1",
             "name": "Par6",
             "start_channel": 99,
             "type": "Compac Par 18 Tri"
         },
         {
             "channel_count": 4,
-            "linked_to": 7,
+            "linked_to": "Par1",
             "name": "Par7",
             "start_channel": 103,
             "type": "Compac Par 18 Tri"
         },
         {
             "channel_count": 4,
-            "linked_to": 7,
+            "linked_to": "Par1",
             "name": "Par8",
             "start_channel": 107,
             "type": "Compac Par 18 Tri"
@@ -119,31 +119,31 @@
         },
         {
             "channel_count": 3,
-            "linked_to": 15,
+            "linked_to": "Tribar2",
             "name": "Tribar3",
             "start_channel": 117,
             "type": "RGB"
         },
         {
             "channel_count": 3,
-            "linked_to": 16,
+            "linked_to": null,
             "name": "Tribar4",
             "start_channel": 120,
             "type": "RGB"
         },
         {
-            "name": "Sfeer Links",
-            "type": "RGB",
-            "start_channel": 123,
             "channel_count": 3,
-            "linked_to": null
+            "linked_to": null,
+            "name": "Sfeer Links",
+            "start_channel": 123,
+            "type": "RGB"
         },
         {
-            "name": "Sfeer rechts",
-            "type": "RGB",
-            "start_channel": 126,
             "channel_count": 3,
-            "linked_to": 18
+            "linked_to": "Sfeer Links",
+            "name": "Sfeer rechts",
+            "start_channel": 126,
+            "type": "RGB"
         }
     ],
     "scenes": [

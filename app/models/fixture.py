@@ -11,7 +11,7 @@ class Fixture:
         self.fixture_type = fixture_type
         self.start_channel = start_channel
         self.channel_count = channel_count
-        self.linked_to = linked_to  # Index of fixture this one is linked to, or None
+        self.linked_to = linked_to  # Name of the master fixture this one is linked to, or None
         
     def to_dict(self):
         """Convert fixture to dictionary for JSON serialization"""

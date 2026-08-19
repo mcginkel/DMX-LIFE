@@ -158,11 +158,8 @@ document.addEventListener('DOMContentLoaded', function() {
             // Fixture name
             const fixtureHeader = document.createElement('h4');            // Add visual indicator for linked fixtures
             let displayText = fixture.name;
-            if (fixture.linked_to !== undefined && fixture.linked_to !== null) {
-                const linkedFixture = fixtures[fixture.linked_to];
-                if (linkedFixture) {
-                    displayText += ` (→ ${linkedFixture.name})`;
-                }
+            if (fixture.linked_to) {
+                displayText += ` (→ ${fixture.linked_to})`;
             }
             fixtureHeader.textContent = `${displayText} (${fixture.type})`;
             
@@ -454,13 +451,10 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function copyValueToLinkedFixtures(sourceFixture, channelOffset, value) {
-        // Find fixtures linked to the source fixture
-        const sourceFixtureIndex = fixtures.findIndex(f => f.name === sourceFixture.name);
-        if (sourceFixtureIndex === -1) return;
-        
-        fixtures.forEach((fixture, index) => {
+        // Find fixtures linked to the source fixture by name
+        fixtures.forEach((fixture) => {
             // Skip if this is the source fixture or if it's not linked to the source
-            if (index === sourceFixtureIndex || fixture.linked_to !== sourceFixtureIndex) {
+            if (fixture.name === sourceFixture.name || fixture.linked_to !== sourceFixture.name) {
                 return;
             }
             

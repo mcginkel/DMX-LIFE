@@ -75,15 +75,12 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Add visual indicator for linked fixtures
             let displayText = fixture.name;
-            if (fixture.linked_to !== undefined && fixture.linked_to !== null) {
-                const linkedFixture = fixtures[fixture.linked_to];
-                if (linkedFixture) {
-                    displayText += ` (→ ${linkedFixture.name})`;
-                }
+            if (fixture.linked_to) {
+                displayText += ` (→ ${fixture.linked_to})`;
             }
-            
+
             // Check if this fixture has others linked to it
-            const hasLinkedFixtures = fixtures.some((f, i) => f.linked_to === index && i !== index);
+            const hasLinkedFixtures = fixtures.some(f => f.linked_to === fixture.name && f !== fixture);
             if (hasLinkedFixtures) {
                 displayText += ' [Master]';
             }
@@ -97,9 +94,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     function updateLinkOptions() {
         fixtureLinkSelect.innerHTML = '<option value="">Not linked</option>';
-        
+
         const currentType = fixtureTypeSelect.value;
-        const hasLinkedFixtures = fixtures.some((f, i) => f.linked_to === editingFixtureIndex && i !== editingFixtureIndex);
+        const editingFixtureName = editingFixtureIndex === -1 ? null : fixtures[editingFixtureIndex].name;
+        const hasLinkedFixtures = fixtures.some(f => f.linked_to === editingFixtureName && f.linked_to !== null);
 
         if (hasLinkedFixtures) {
             fixtureLinkSelect.disabled = true;
@@ -110,22 +108,15 @@ document.addEventListener('DOMContentLoaded', function() {
             fixtureLinkSelect.title = '';
         }
         fixtures.forEach((fixture, index) => {
-            // Only show fixtures of the same type
+            // Only show fixtures of the same type, excluding the one being edited
             if (fixture.type === currentType && index !== editingFixtureIndex) {
                 // Don't show fixtures that are already linked to someone else
-                // (to prevent chaining) or that would create a loop
-                if ((fixture.linked_to === null || fixture.linked_to === undefined)) {
-                    // Also check that this fixture isn't linked to the current one (prevent loops)
-                    if (editingFixtureIndex === -1 || fixture.linked_to !== editingFixtureIndex) {
-                        // Check if this fixture has others linked to it (making it a master)
-                        const hasLinkedFixtures = fixtures.some((f, i) => f.linked_to === index && i !== index && i !== editingFixtureIndex);
-                        if (!hasLinkedFixtures||true) {
-                            const option = document.createElement('option');
-                            option.value = index;
-                            option.textContent = fixture.name;
-                            fixtureLinkSelect.appendChild(option);
-                        }
-                    }
+                // (to prevent chaining)
+                if (fixture.linked_to === null || fixture.linked_to === undefined) {
+                    const option = document.createElement('option');
+                    option.value = fixture.name;
+                    option.textContent = fixture.name;
+                    fixtureLinkSelect.appendChild(option);
                 }
             }
         });
@@ -224,10 +215,11 @@ document.addEventListener('DOMContentLoaded', function() {
             .then(data => {
                 const channelCount = data.channels.length;
                 
-                // Create fixture data
+                // Create fixture data. Links identify their master by name,
+                // not array position, so they survive reordering/deletion.
                 const linkedToValue = fixtureLinkSelect.value;
-                const linkedTo = linkedToValue === '' ? null : parseInt(linkedToValue);
-                
+                const linkedTo = linkedToValue === '' ? null : linkedToValue;
+
                 const fixture = {
                     name: fixtureNameInput.value,
                     type: fixtureTypeSelect.value,
@@ -235,38 +227,37 @@ document.addEventListener('DOMContentLoaded', function() {
                     channel_count: channelCount,
                     linked_to: linkedTo
                 };
-                
+
                 // Validate fixture data
                 if (!fixture.name) {
                     alert('Fixture name is required');
                     return;
                 }
-                
+
                 if (fixture.start_channel < 1 || fixture.start_channel > 512) {
                     alert('DMX channel must be between 1 and 512');
                     return;
                 }
-                
+
                 // Validate linking logic
                 if (linkedTo !== null) {
-                    // Check if target fixture exists and is same type
-                    if (linkedTo >= fixtures.length || fixtures[linkedTo].type !== fixture.type) {
-                        alert('Invalid link target: fixture must exist and be of the same type');
-                        return;
-                    }
-                    
-                    // Check if target fixture is itself linked to someone (prevent chaining)
-                    if (fixtures[linkedTo].linked_to !== null && fixtures[linkedTo].linked_to !== undefined) {
-                        alert('Cannot link to a fixture that is already linked to another fixture');
-                        return;
-                    }
-                    
-                    // Check if this would create a loop
-                    if (linkedTo === editingFixtureIndex) {
+                    if (linkedTo === fixture.name) {
                         alert('Cannot link fixture to itself');
                         return;
                     }
-                    
+
+                    // Check if target fixture exists and is same type
+                    const master = fixtures.find((f, i) => f.name === linkedTo && i !== editingFixtureIndex);
+                    if (!master || master.type !== fixture.type) {
+                        alert('Invalid link target: fixture must exist and be of the same type');
+                        return;
+                    }
+
+                    // Check if target fixture is itself linked to someone (prevent chaining)
+                    if (master.linked_to !== null && master.linked_to !== undefined) {
+                        alert('Cannot link to a fixture that is already linked to another fixture');
+                        return;
+                    }
                 }
                 
                 // Check for channel conflicts
@@ -352,30 +343,30 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const fixture = fixtures[editingFixtureIndex];
-        
+
         // Check if other fixtures are linked to this one
-        const linkedFixtures = fixtures.filter((f, i) => f.linked_to === editingFixtureIndex && i !== editingFixtureIndex);
+        const linkedFixtures = fixtures.filter(f => f.linked_to === fixture.name && f !== fixture);
         if (linkedFixtures.length > 0) {
             const linkedNames = linkedFixtures.map(f => f.name).join(', ');
             if (!confirm(`Warning: The following fixtures are linked to "${fixture.name}": ${linkedNames}\n\nDeleting this fixture will unlink them. Continue?`)) {
                 return;
             }
         }
-        
+
         if (!confirm(`Are you sure you want to delete fixture "${fixture.name}"?`)) {
             return;
         }
-        
-        // Unlink any fixtures that were linked to this one
-        fixtures.forEach((f, i) => {
-            if (f.linked_to === editingFixtureIndex) {
+
+        // Unlink any fixtures that were linked to this one by name. No index
+        // adjustment is needed for anyone else's links - they name a fixture,
+        // not a position, so deleting from the middle of the array can't
+        // invalidate them.
+        fixtures.forEach(f => {
+            if (f.linked_to === fixture.name) {
                 f.linked_to = null;
-            } else if (f.linked_to > editingFixtureIndex) {
-                // Adjust indices for fixtures linked to ones after the deleted fixture
-                f.linked_to--;
             }
         });
-        
+
         // Remove from array
         fixtures.splice(editingFixtureIndex, 1);
         
