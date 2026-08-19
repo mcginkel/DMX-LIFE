@@ -34,7 +34,6 @@ Proposals, none implemented. Roughly in priority order:
 
 | Change | Why it matters |
 |---|---|
-| [thread-safe-dmx-buffers](changes/thread-safe-dmx-buffers/proposal.md) | Buffers are shared between threads with no synchronisation |
 | [add-test-suite](changes/add-test-suite/proposal.md) | Nothing is tested automatically |
 | [refresh-architecture-docs](changes/refresh-architecture-docs/proposal.md) | README and ARCHITECTURE.md describe behaviour that no longer exists |
 
@@ -42,6 +41,7 @@ Proposals, none implemented. Roughly in priority order:
 
 | Change | Landed |
 |---|---|
+| [thread-safe-dmx-buffers](changes/archive/2026-08-19-thread-safe-dmx-buffers/proposal.md) | 2026-08-19 — a single lock now guards the DMX buffers so every transmitted frame is one composition, never a mixture of two |
 | [fix-fixture-link-references](changes/archive/2026-08-19-fix-fixture-link-references/proposal.md) | 2026-08-19 — fixture links now identify their master by name instead of array position; repaired the off-by-one data and added server-side validation |
 | [atomic-config-writes](changes/archive/2026-08-19-atomic-config-writes/proposal.md) | 2026-08-19 — config.json is written via a temp file + atomic rename instead of truncate-in-place; new configuration-persistence capability |
 | [remove-dead-code](changes/archive/2026-08-19-remove-dead-code/proposal.md) | 2026-08-19 — deleted a 433-line superseded module, duplicate utils, an unused import, and untracked .DS_Store |
