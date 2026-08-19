@@ -18,31 +18,31 @@ connection_status = {
     'error_message': None
 }
 
-# Export current_dmx_values for backward compatibility
+# Fallback buffer returned only before the controller is initialized.
 current_dmx_values = bytearray(512)  # Default empty buffer
 
 
 def get_current_dmx_values():
-    """Get current DMX values array"""
+    """Get current DMX values as a point-in-time snapshot"""
     if not dmx_controller:
         return current_dmx_values
-    return dmx_controller.current_values
+    return dmx_controller.get_current_values()
 
 
 def init_dmx_controller(app):
     """Initialize the DMX controller system with application context"""
-    global config_manager, scene_manager, dmx_controller, current_dmx_values
-    
+    global config_manager, scene_manager, dmx_controller
+
     # Initialize managers
     config_manager = ConfigManager(app.config['CONFIG_FILE'])
     scene_manager = SceneManager(config_manager)
-    
+
     # Load scenes
     scene_manager.load_scenes()
-    
+
     # Get network settings
     network_settings = config_manager.get_network_settings()
-    
+
     # Initialize DMX controller
     dmx_controller = DMXController(
         network_settings['artnet_ip'],
@@ -50,10 +50,8 @@ def init_dmx_controller(app):
         network_settings['packet_size'],
         network_settings['refresh_rate']
     )
-    
-    # Export current values reference
-    current_dmx_values = dmx_controller.current_values
-    
+
+
     # Register application lifecycle hooks
     @app.before_request
     def before_request():

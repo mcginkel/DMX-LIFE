@@ -29,14 +29,22 @@ class DMXController:
         self.artnet.set_net(0)
         self.artnet.set_subnet(0)
         
-        # DMX value buffers
+        # DMX value buffers. Every transmitted frame must correspond to
+        # exactly one scene composition, never a mixture of two - _lock
+        # guards current_values, target_values and transition_active/
+        # transition_start_time together, so a reader can never observe new
+        # values with a stale transition flag or vice versa. It covers
+        # buffer access only, never the socket send: _send_dmx_packet takes
+        # its frame as an argument and must not read self.current_values,
+        # or a slow/unreachable Art-Net node would stall every writer.
+        self._lock = threading.Lock()
         self.current_values = bytearray(512)
         self.target_values = bytearray(512)
-        
+
         # Transition state
         self.transition_active = False
         self.transition_start_time = 0
-        
+
         # Thread control
         self._thread = None
         self._running = False
@@ -129,15 +137,19 @@ class DMXController:
         """Main thread loop - handles smooth transitions and DMX output"""
         while self._running:
             time.sleep(self.UPDATE_RATE)
-            
-            if self.transition_active:
-                self._update_transition()
-            
+
+            with self._lock:
+                if self.transition_active:
+                    self._update_transition()
+                # Snapshot under the lock; the send itself happens outside
+                # it so a slow or unreachable node can't stall a writer.
+                frame = bytes(self.current_values)
+
             # Always send DMX values (for connection monitoring)
-            self._send_dmx_packet(self.current_values)
-    
+            self._send_dmx_packet(frame)
+
     def _update_transition(self):
-        """Update DMX values during a transition"""
+        """Update DMX values during a transition. Caller must hold _lock."""
         # Calculate progress (0.0 to 1.0)
         elapsed = time.time() - self.transition_start_time
         progress = min(elapsed / self.TRANSITION_DURATION, 1.0)
@@ -160,45 +172,50 @@ class DMXController:
     def set_with_transition(self, buffer):
         """
         Set DMX values with smooth transition
-        
+
         Args:
             buffer: bytearray(512) with target DMX values
         """
         if not isinstance(buffer, bytearray) or len(buffer) != 512:
             raise ValueError("Buffer must be bytearray of length 512")
-        
-        # Update target values
-        for i in range(512):
-            self.target_values[i] = buffer[i]
-        
-        # Start transition
-        self.transition_active = True
-        self.transition_start_time = time.time()
-    
+
+        with self._lock:
+            # Update target values
+            for i in range(512):
+                self.target_values[i] = buffer[i]
+
+            # Start transition
+            self.transition_active = True
+            self.transition_start_time = time.time()
+
     def set_immediate(self, buffer):
         """
         Set DMX values immediately without transition (for testing)
-        
+
         Args:
             buffer: bytearray(512) with DMX values
         """
         if not isinstance(buffer, bytearray) or len(buffer) != 512:
             raise ValueError("Buffer must be bytearray of length 512")
-        
-        # Update both current and target
-        for i in range(512):
-            self.current_values[i] = buffer[i]
-            self.target_values[i] = buffer[i]
-        
-        # Cancel any active transition
-        self.transition_active = False
-        
-        # Send immediately
-        self._send_dmx_packet(buffer)
-    
+
+        with self._lock:
+            # Update both current and target
+            for i in range(512):
+                self.current_values[i] = buffer[i]
+                self.target_values[i] = buffer[i]
+
+            # Cancel any active transition
+            self.transition_active = False
+
+            # Snapshot under the lock; send outside it, matching the thread.
+            frame = bytes(self.current_values)
+
+        self._send_dmx_packet(frame)
+
     def get_current_values(self):
-        """Get current DMX values (for monitoring)"""
-        return self.current_values
+        """Get current DMX values as a point-in-time snapshot (for monitoring)"""
+        with self._lock:
+            return bytes(self.current_values)
     
     def get_connection_status(self):
         """Get connection status (for monitoring)"""
