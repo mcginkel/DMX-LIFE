@@ -37,6 +37,7 @@ Proposals, none implemented. Roughly in priority order:
 | [add-daily-config-backup](changes/add-daily-config-backup/proposal.md) | A lazy once-a-day config.json snapshot, one per day kept forever — safety net for "several small changes added up to a mistake," distinct from the per-write `.bak` |
 | [add-pluggable-dmx-backends](changes/add-pluggable-dmx-backends/proposal.md) | Replaces StupidArtnet with our own Art-Net sender behind a `DMXBackend` interface, plus an Enttec DMX USB Pro backend — DMX output becomes configurable per installation instead of Art-Net-only |
 | [compact-scene-storage](changes/compact-scene-storage/proposal.md) | Scenes stored as a sparse `{channel: value}` map instead of a 512-entry array — config.json projected 186→61 KB, and retires the `enabledFixtures` dual-meaning wart (ADR-0007) in the same move |
+| [add-version-display](changes/add-version-display/proposal.md) | Shows the app's version (from a hand-edited `VERSION` file, matching the manual tag-and-zip release process) in the footer of every page — "which build is this" currently has no answer |
 | [add-test-suite](changes/add-test-suite/proposal.md) | Nothing is tested automatically |
 
 ## Completed
