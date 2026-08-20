@@ -1,5 +1,5 @@
 {
-    "artnet_ip": "192.168.3.170",
+    "artnet_ip": "10.10.11.10",
     "artnet_port": 6454,
     "universe": 1,
     "packet_size": 512,
