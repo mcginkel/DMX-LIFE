@@ -55,11 +55,11 @@
             "type": "Compac Par 18 Tri"
         },
         {
-            "channel_count": 4,
-            "linked_to": "Par1",
             "name": "Par2",
+            "type": "Compac Par 18 Tri",
             "start_channel": 83,
-            "type": "Compac Par 18 Tri"
+            "channel_count": 4,
+            "linked_to": null
         },
         {
             "channel_count": 4,
@@ -69,18 +69,18 @@
             "type": "Compac Par 18 Tri"
         },
         {
-            "channel_count": 4,
-            "linked_to": "Par1",
             "name": "Par4",
+            "type": "Compac Par 18 Tri",
             "start_channel": 91,
-            "type": "Compac Par 18 Tri"
+            "channel_count": 4,
+            "linked_to": "Par2"
         },
         {
-            "channel_count": 4,
-            "linked_to": "Par1",
             "name": "Par5",
+            "type": "Compac Par 18 Tri",
             "start_channel": 95,
-            "type": "Compac Par 18 Tri"
+            "channel_count": 4,
+            "linked_to": "Par2"
         },
         {
             "channel_count": 4,
@@ -90,11 +90,11 @@
             "type": "Compac Par 18 Tri"
         },
         {
-            "channel_count": 4,
-            "linked_to": "Par1",
             "name": "Par7",
+            "type": "Compac Par 18 Tri",
             "start_channel": 103,
-            "type": "Compac Par 18 Tri"
+            "channel_count": 4,
+            "linked_to": "Par2"
         },
         {
             "channel_count": 4,
@@ -125,11 +125,11 @@
             "type": "RGB"
         },
         {
-            "channel_count": 3,
-            "linked_to": null,
             "name": "Tribar4",
+            "type": "RGB",
             "start_channel": 120,
-            "type": "RGB"
+            "channel_count": 3,
+            "linked_to": "Tribar1"
         },
         {
             "channel_count": 3,
