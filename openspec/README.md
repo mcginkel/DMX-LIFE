@@ -27,6 +27,7 @@ sections — that get merged into `specs/` once the work lands.
 | [network-configuration](specs/network-configuration/spec.md) | Art-Net destination, universe, refresh rate |
 | [system-monitoring](specs/system-monitoring/spec.md) | Connection indicator, DMX value monitor |
 | [access-control](specs/access-control/spec.md) | Authentication |
+| [version-display](specs/version-display/spec.md) | Shows the running app's version on every page |
 
 ## Open changes
 
@@ -37,13 +38,13 @@ Proposals, none implemented. Roughly in priority order:
 | [add-daily-config-backup](changes/add-daily-config-backup/proposal.md) | A lazy once-a-day config.json snapshot, one per day kept forever — safety net for "several small changes added up to a mistake," distinct from the per-write `.bak` |
 | [add-pluggable-dmx-backends](changes/add-pluggable-dmx-backends/proposal.md) | Replaces StupidArtnet with our own Art-Net sender behind a `DMXBackend` interface, plus an Enttec DMX USB Pro backend — DMX output becomes configurable per installation instead of Art-Net-only |
 | [compact-scene-storage](changes/compact-scene-storage/proposal.md) | Scenes stored as a sparse `{channel: value}` map instead of a 512-entry array — config.json projected 186→61 KB, and retires the `enabledFixtures` dual-meaning wart (ADR-0007) in the same move |
-| [add-version-display](changes/add-version-display/proposal.md) | Shows the app's version (from a hand-edited `VERSION` file, matching the manual tag-and-zip release process) in the footer of every page — "which build is this" currently has no answer |
 | [add-test-suite](changes/add-test-suite/proposal.md) | Nothing is tested automatically |
 
 ## Completed
 
 | Change | Landed |
 |---|---|
+| [add-version-display](changes/archive/2026-08-20-add-version-display/proposal.md) | 2026-08-20 — a hand-edited `VERSION` file is read at startup and shown in the footer of every page; falls back to "unknown" if missing; PyInstaller build check left for the next real release |
 | [refresh-architecture-docs](changes/archive/2026-08-19-refresh-architecture-docs/proposal.md) | 2026-08-19 — README/ARCHITECTURE.md/SUMMARY.md/copilot-instructions.md corrected; ARCHITECTURE.md shrunk 570→147 lines to an orientation doc pointing at docs/adr/ and openspec/specs/ |
 | [thread-safe-dmx-buffers](changes/archive/2026-08-19-thread-safe-dmx-buffers/proposal.md) | 2026-08-19 — a single lock now guards the DMX buffers so every transmitted frame is one composition, never a mixture of two |
 | [fix-fixture-link-references](changes/archive/2026-08-19-fix-fixture-link-references/proposal.md) | 2026-08-19 — fixture links now identify their master by name instead of array position; repaired the off-by-one data and added server-side validation |
