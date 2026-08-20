@@ -97,6 +97,21 @@ def _resolve_runtime_settings():
     return host, debug, username, password
 
 
+def _read_version():
+    """
+    Read the app version from the VERSION file at the repo root.
+
+    Falls back to "unknown" if the file is missing or unreadable - a
+    cosmetic feature must never block the app from starting.
+    """
+    version_file = os.path.join(os.path.dirname(__file__), '..', 'VERSION')
+    try:
+        with open(version_file, 'r') as f:
+            return f.read().strip() or 'unknown'
+    except OSError:
+        return 'unknown'
+
+
 def create_app(config=None):
     """Initialize and configure the Flask application"""
     app = Flask(__name__)
@@ -112,12 +127,17 @@ def create_app(config=None):
         MAX_SCENES=40,
         DMXLIFE_HOST=host,
         DMXLIFE_DEBUG=debug,
+        VERSION=_read_version(),
     )
 
     # Add context processors for templates
     @app.context_processor
     def inject_year():
         return {'current_year': datetime.datetime.now().year}
+
+    @app.context_processor
+    def inject_version():
+        return {'app_version': app.config['VERSION']}
 
     # Override with any passed configuration
     if config:
