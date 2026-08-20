@@ -4,8 +4,8 @@
 
 The system SHALL retain a snapshot of the configuration as it stood before
 the first change of each calendar day, distinct from the single most recent
-previous version already kept by atomic writes, and SHALL keep exactly one
-such snapshot at a time rather than accumulating one per day indefinitely.
+previous version already kept by atomic writes, and SHALL keep every such
+daily snapshot rather than discarding earlier ones as new ones are created.
 
 #### Scenario: First change of the day creates a snapshot
 
@@ -20,11 +20,11 @@ such snapshot at a time rather than accumulating one per day indefinitely.
   already exists
 - **THEN** no additional snapshot is created
 
-#### Scenario: A new day's snapshot replaces the previous one
+#### Scenario: A new day's snapshot does not remove previous days'
 
 - **WHEN** the first snapshot of a new calendar day is created
-- **THEN** any snapshot from a previous day is removed
-- **AND** exactly one dated snapshot exists afterward
+- **THEN** every snapshot from a previous day remains on disk unchanged
+- **AND** the new day's snapshot exists alongside them
 
 #### Scenario: Snapshot failure does not block the real write
 
