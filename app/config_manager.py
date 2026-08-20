@@ -1,8 +1,10 @@
 """
 Config Manager - Handles all configuration file I/O operations
 """
+import datetime
 import json
 import os
+import shutil
 from flask import current_app
 
 
@@ -52,6 +54,33 @@ class ConfigManager:
                 current_app.logger.error(f"Error reading configuration: {e}")
             raise
 
+    def _snapshot_daily_backup(self):
+        """
+        Copy the current on-disk config to backups/config-<date>.json if
+        today doesn't have one yet.
+
+        Best-effort: any failure here (permissions, disk full, ...) is
+        logged and swallowed, never allowed to block the real write it
+        guards. Runs before the atomic-write sequence, since it needs to
+        capture the file exactly as it stood before this write touches it.
+        """
+        if not os.path.exists(self.config_file):
+            return
+
+        try:
+            today = datetime.date.today().isoformat()
+            backups_dir = os.path.join(os.path.dirname(self.config_file), '..', 'backups')
+            snapshot_path = os.path.join(backups_dir, f"config-{today}.json")
+
+            if os.path.exists(snapshot_path):
+                return
+
+            os.makedirs(backups_dir, exist_ok=True)
+            shutil.copy2(self.config_file, snapshot_path)
+        except Exception as e:
+            if current_app:
+                current_app.logger.error(f"Error creating daily config snapshot: {e}")
+
     def write(self, config):
         """
         Write the entire configuration file atomically.
@@ -62,6 +91,8 @@ class ConfigManager:
         never observes a partial or empty file: at every point it is either
         the complete previous version or the complete new one.
         """
+        self._snapshot_daily_backup()
+
         tmp_path = f"{self.config_file}.tmp"
         backup_path = f"{self.config_file}.bak"
         had_previous = os.path.exists(self.config_file)
