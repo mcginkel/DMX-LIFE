@@ -91,37 +91,32 @@ NOT patch the previously transmitted frame.
 - **WHEN** two active layers both claim the same channel
 - **THEN** the value from the most recently activated layer is transmitted
 
-### Requirement: Fixture-scoped channel application
+### Requirement: Sparse channel application
 
-When a scene lists one or more fixtures in `enabledFixtures`, the system SHALL
-copy every channel in each named fixture's address range from the scene into the
-frame, including channels whose value is zero, and SHALL leave channels outside
-those fixtures untouched.
+The system SHALL apply a scene's channels by writing exactly the channels
+present in its stored channel map, using each entry's value as stored -
+including a stored zero - and SHALL leave every channel absent from that map
+untouched by that layer.
 
-#### Scenario: Scene writes zeros within its own fixtures
+#### Scenario: A present zero is written
 
-- **WHEN** a scene enables a fixture and stores 0 for one of that fixture's
-  channels
+- **WHEN** a scene's channel map contains an entry with value 0
 - **THEN** that channel is set to 0 in the frame
 
-#### Scenario: Scene does not disturb fixtures it does not enable
+#### Scenario: An absent channel is left alone
 
-- **WHEN** a scene enables only the Tribar fixtures
-- **THEN** channels belonging to the Performer fixtures are unaffected by that
-  layer
+- **WHEN** a channel does not appear in a scene's channel map
+- **THEN** that channel is not modified by that layer, regardless of what
+  value it holds from other active layers or from being previously unset
 
-### Requirement: Sparse overlay application
+#### Scenario: A layer touches only its own claimed channels
 
-When a scene's `enabledFixtures` is empty, the system SHALL apply only the
-channels holding a non-zero value, ignoring fixture address boundaries.
-
-#### Scenario: Overlay touches only its own channels
-
-- **WHEN** a sparse scene stores non-zero values at channels 34, 36, 40, 47 and
-  49
-- **AND** those channels fall inside fixtures driven by another active layer
-- **THEN** only those five channels are overwritten
-- **AND** the remaining channels of those fixtures keep the other layer's values
+- **WHEN** a scene's channel map contains entries for some channels of a
+  fixture, and another active layer also drives that fixture
+- **THEN** only the channels present in the first scene's map are
+  overwritten by it
+- **AND** the remaining channels of that fixture keep whatever the other
+  active layer defines for them
 
 ### Requirement: Grouped scene presentation
 
