@@ -54,6 +54,17 @@
                             <label for="scene-name">Scene Name:</label>
                             <input type="text" id="scene-name" name="name" placeholder="My Scene">
                         </div>
+
+                        <div class="form-group">
+                            <label for="scene-group">Group:</label>
+                            <select id="scene-group" name="group">
+                                <option value="">No group</option>
+                                {% for key, label in group_choices %}
+                                <option value="{{ key }}">{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                            <p class="help-text">Main, Achtergrond, Sfeer and Alles Aan / Uit allow one active scene at a time. Extra layers on top of whatever else is active.</p>
+                        </div>
                         
                         <div id="fixture-controls">
                             <!-- Fixture controls will be loaded here -->

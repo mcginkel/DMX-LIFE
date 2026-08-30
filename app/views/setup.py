@@ -3,6 +3,7 @@ Setup views for DMX configuration
 """
 from flask import Blueprint, render_template, jsonify, request, current_app
 from app import auth
+from app.views.main import GROUP_ORDER
 from app.dmx_controller import get_config, save_config, save_scene, delete_scene, test_scene
 from app.models.fixture import FixtureType
 
@@ -17,6 +18,12 @@ def get_json_object():
     if not isinstance(data, dict):
         return None
     return data
+
+
+# The groups a scene can be assigned to in the editor. GROUP_ORDER is the
+# exclusive groups in main-page display order; 'extra' layers independently
+# on top of them, so it is not part of that ordering but is still selectable.
+SCENE_GROUP_CHOICES = GROUP_ORDER + [('extra', 'Extra')]
 
 
 def parse_channel_map(channels):
@@ -131,7 +138,8 @@ def fixtures():
 def scenes():
     """Scene editor"""
     config = get_config()
-    return render_template('setup/scenes.html', config=config)
+    return render_template('setup/scenes.html', config=config,
+                           group_choices=SCENE_GROUP_CHOICES)
 
 # API endpoints for setup
 

@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const sceneList = document.getElementById('scene-list');
     const sceneForm = document.getElementById('scene-form');
     const sceneNameInput = document.getElementById('scene-name');
+    const sceneGroupSelect = document.getElementById('scene-group');
     const addSceneBtn = document.getElementById('add-scene');
     const deleteSceneBtn = document.getElementById('delete-scene');
     const testSceneBtn = document.getElementById('test-scene');
@@ -105,6 +106,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!scene) return;
         
         sceneNameInput.value = scene.name;
+        sceneGroupSelect.value = scene.group || '';
         
         // Set active state in scene list
         const activeScene = sceneList.querySelector('.scene-item.active');
@@ -335,10 +337,13 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Create scene data
+        // Create scene data. The group has to be sent explicitly: the server
+        // rewrites the whole scene record on save, so omitting it would clear
+        // the scene's group rather than leave it alone.
         const sceneData = {
             name: sceneName,
-            channels: collectChannelMap()
+            channels: collectChannelMap(),
+            group: sceneGroupSelect.value || null
         };
         
         // Send to server
