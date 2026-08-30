@@ -35,6 +35,9 @@ class ConfigManager:
             with open(self.config_file, 'r') as f:
                 config = json.load(f)
             self._migrate_fixture_links(config.get('fixtures', []))
+            self._migrate_scene_channels(
+                config.get('scenes', []), config.get('fixtures', [])
+            )
             return config
         except json.JSONDecodeError as e:
             backup_path = f"{self.config_file}.bak"
@@ -125,6 +128,81 @@ class ConfigManager:
             if current_app:
                 current_app.logger.error(f"Error writing configuration: {e}")
             raise
+
+    def _migrate_scene_channels(self, scenes, fixtures):
+        """
+        Convert legacy 512-entry `channels` arrays to a sparse
+        `{channel: value}` map, in place. A config already using maps is left
+        as-is apart from key normalisation - safe to call on every read.
+
+        The old array format could not distinguish "channel deliberately set
+        to zero" from "channel this scene has no opinion about", so which
+        channels a scene claimed had to be carried separately in
+        `enabledFixtures`, with two different meanings (ADR-0007):
+
+        - non-empty: copy each named fixture's *entire* channel range,
+          zeros included;
+        - empty: a sparse overlay of only the non-zero values.
+
+        Both collapse into presence-as-the-signal here: the migrated map
+        holds exactly the channels that scene claimed under whichever rule
+        applied to it, so `enabledFixtures` carries no information the map
+        does not and is dropped.
+
+        This is also the single boundary where JSON's string keys become
+        ints. Everything downstream works with a genuine int -> int map, so
+        a string channel number can never be compared against an int one.
+        """
+        conversions = []
+
+        for scene in scenes:
+            channels = scene.get('channels')
+
+            if isinstance(channels, dict):
+                # Already migrated. Only normalise the keys JSON gave us as
+                # strings; entries that cannot be a channel number are
+                # dropped rather than left to fail an int comparison later.
+                normalised = {}
+                for key, value in channels.items():
+                    try:
+                        normalised[int(key)] = value
+                    except (TypeError, ValueError):
+                        continue
+                scene['channels'] = normalised
+                scene.pop('enabledFixtures', None)
+                continue
+
+            if not isinstance(channels, list):
+                continue
+
+            enabled_fixtures = scene.get('enabledFixtures') or []
+            migrated = {}
+
+            if enabled_fixtures:
+                for fixture in fixtures:
+                    if fixture.get('name', '') not in enabled_fixtures:
+                        continue
+                    start_channel = fixture.get('start_channel', 1)
+                    channel_count = fixture.get('channel_count', 1)
+                    for offset in range(channel_count):
+                        channel = start_channel + offset  # 1-based
+                        index = channel - 1
+                        if 1 <= channel <= 512 and index < len(channels):
+                            migrated[channel] = channels[index]
+            else:
+                for index, value in enumerate(channels):
+                    if index < 512 and value:
+                        migrated[index + 1] = value
+
+            scene['channels'] = migrated
+            scene.pop('enabledFixtures', None)
+            conversions.append((scene.get('name'), len(channels), len(migrated)))
+
+        if conversions and current_app:
+            lines = ["Migrated scene channels from full arrays to sparse maps:"]
+            for name, before, after in conversions:
+                lines.append(f"  {name}: {before} stored channels -> {after}")
+            current_app.logger.warning("\n".join(lines))
 
     def _migrate_fixture_links(self, fixtures):
         """
@@ -272,7 +350,7 @@ class ConfigManager:
         config = self.read()
         return config.get('scenes', [])
     
-    def save_scene(self, name, channels, enabled_fixtures=None, group=None):
+    def save_scene(self, name, channels, group=None):
         """Save or update a scene"""
         try:
             config = self.read()
@@ -289,7 +367,6 @@ class ConfigManager:
             scene_data = {
                 'name': name,
                 'channels': channels,
-                'enabledFixtures': enabled_fixtures if enabled_fixtures is not None else [],
                 'group': group
             }
             

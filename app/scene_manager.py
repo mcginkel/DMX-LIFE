@@ -52,33 +52,21 @@ class SceneManager:
         return self.highest_active_idx
 
     def _apply_scene(self, buffer, scene):
-        """Apply one scene's channel values onto an existing buffer (in place)"""
-        channel_values = scene['channels']
-        enabled_fixtures = scene.get('enabledFixtures') or []
+        """
+        Apply one scene's channel values onto an existing buffer (in place).
 
-        if not enabled_fixtures:
-            # Sparse overlay: only write the channels this scene actually
-            # defines (nonzero), leaving everything else in the buffer alone.
-            for channel, value in enumerate(channel_values):
-                if 0 <= channel < 512 and value:
-                    buffer[channel] = value
-                    self.highest_active_idx = max(self.highest_active_idx, channel)
-            return
-
-        fixtures = self.config_manager.get_fixtures()
-        for fixture in fixtures:
-            if fixture.get('name', '') not in enabled_fixtures:
-                continue
-
-            start_channel = fixture.get('start_channel', 1) - 1  # 0-based
-            channel_count = fixture.get('channel_count', 1)
-            self.highest_active_idx = max(
-                self.highest_active_idx, start_channel + channel_count - 1
-            )
-            for i in range(channel_count):
-                channel = start_channel + i
-                if 0 <= channel < 512 and channel < len(channel_values):
-                    buffer[channel] = channel_values[channel]
+        A scene's channel map holds exactly the channels it claims, so
+        presence is the whole rule: write every entry, including a stored
+        zero, and leave every absent channel to whatever other layers put
+        there. This used to be two rules branching on `enabledFixtures`,
+        which existed only because a full-length array could not tell a
+        deliberate zero apart from an unclaimed channel.
+        """
+        for channel, value in scene['channels'].items():
+            index = channel - 1  # map keys are 1-based DMX channel numbers
+            if 0 <= index < 512:
+                buffer[index] = value
+                self.highest_active_idx = max(self.highest_active_idx, index)
 
     def _rebuild_buffer(self):
         """Recompute the full 512-channel buffer from all currently active layers"""
@@ -132,14 +120,13 @@ class SceneManager:
                 current_app.logger.error(f"Error toggling scene: {e}")
             return None, False, self.get_active_scenes()
 
-    def save_scene(self, name, channels, enabled_fixtures=None, group=None):
+    def save_scene(self, name, channels, group=None):
         """Save a scene (delegates to config manager)"""
-        success = self.config_manager.save_scene(name, channels, enabled_fixtures, group)
+        success = self.config_manager.save_scene(name, channels, group)
         if success:
             self.scenes[name] = {
                 'name': name,
                 'channels': channels,
-                'enabledFixtures': enabled_fixtures if enabled_fixtures is not None else [],
                 'group': group,
             }
         return success

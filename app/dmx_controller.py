@@ -96,25 +96,30 @@ def test_scene(channels):
             current_app.logger.error("DMX controller not initialized")
         return False
 
-    if not isinstance(channels, list):
+    if not isinstance(channels, dict):
         if current_app:
-            current_app.logger.error("test_scene expects a list of channel values")
+            current_app.logger.error("test_scene expects a map of channel number to value")
         return False
 
-    # Convert channels list to buffer. Values are validated here as well as at
-    # the API boundary so that a bad call cannot raise from the assignment
+    # Only the channels present in the map are written; everything else stays
+    # at zero for the preview. Keys and values are validated here as well as
+    # at the API boundary so that a bad call cannot raise from the assignment
     # below; bool is excluded because it is a subclass of int.
     buffer = bytearray(512)
-    for channel, value in enumerate(channels):
-        if channel >= 512:
-            break
+    for channel, value in channels.items():
+        if isinstance(channel, bool) or not isinstance(channel, int) or not 1 <= channel <= 512:
+            if current_app:
+                current_app.logger.error(
+                    f"test_scene rejected invalid channel number: {channel!r}"
+                )
+            return False
         if isinstance(value, bool) or not isinstance(value, int) or not 0 <= value <= 255:
             if current_app:
                 current_app.logger.error(
-                    f"test_scene rejected invalid value at channel {channel + 1}: {value!r}"
+                    f"test_scene rejected invalid value at channel {channel}: {value!r}"
                 )
             return False
-        buffer[channel] = value
+        buffer[channel - 1] = value
 
     # Set immediately
     dmx_controller.set_immediate(buffer)
@@ -149,7 +154,7 @@ def get_available_scenes():
     return scene_manager.get_available_scenes()
 
 
-def save_scene(name, channel_values, enabled_fixtures=None, group=None):
+def save_scene(name, channel_values, group=None):
     """Save a new scene"""
     if not scene_manager:
         return False
@@ -158,7 +163,7 @@ def save_scene(name, channel_values, enabled_fixtures=None, group=None):
     if len(scene_manager.scenes) >= current_app.config['MAX_SCENES'] and name not in scene_manager.scenes:
         return False
 
-    return scene_manager.save_scene(name, channel_values, enabled_fixtures, group)
+    return scene_manager.save_scene(name, channel_values, group)
 
 
 def delete_scene(name):

@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         // Initialize controls with all fixtures enabled by default for new scenes
-        renderFixtureControls([], fixtures.map(f => f.name));
+        renderFixtureControls({}, true);
     }
     
     function editScene(sceneName) {
@@ -117,15 +117,61 @@ document.addEventListener('DOMContentLoaded', function() {
             sceneEl.classList.add('active');
         }
         
-        // Get enabled fixtures (default to all if not specified in the scene)
-        const enabledFixtures = scene.enabledFixtures || [];
-        
-        renderFixtureControls(scene.channels, enabledFixtures);
+        // Which fixtures participate is derived from which channels the
+        // scene's map contains - there is no stored enabledFixtures list.
+        renderFixtureControls(scene.channels || {}, false);
         testScene();
 
     }
     
-    function renderFixtureControls(channelValues = [], enabledFixtures = []) {
+    // A fixture's DMX channel numbers, 1-based, as stored in a scene map.
+    function fixtureChannels(fixture) {
+        const channels = [];
+        for (let i = 0; i < fixture.channel_count; i++) {
+            channels.push(fixture.start_channel + i);
+        }
+        return channels;
+    }
+
+    // A fixture participates in a scene if its channels appear in the map.
+    // Inclusion always writes a fixture's whole range, so testing any one
+    // of its channels is equivalent to testing all of them.
+    function isFixtureInMap(fixture, channelMap) {
+        return fixtureChannels(fixture).some(
+            channel => Object.prototype.hasOwnProperty.call(channelMap, channel)
+        );
+    }
+
+    // The fixture type's declared default for one of its channels, used for
+    // channels absent from a scene's map.
+    function channelDefault(fixture, channelOffset) {
+        const type = fixtureTypes[fixture.type];
+        const channelInfo = type && type.channels && type.channels[channelOffset];
+        return channelInfo && typeof channelInfo.default === 'number'
+            ? channelInfo.default
+            : 0;
+    }
+
+    // Build the scene payload: every channel of every *enabled* fixture,
+    // including ones sitting at 0, and nothing from the disabled ones.
+    // Presence in the map is what claims a channel, so a deliberate zero
+    // has to be written explicitly.
+    function collectChannelMap() {
+        const channelMap = {};
+        fixtureControls.querySelectorAll('.fixture-control').forEach(fixtureEl => {
+            const checkbox = fixtureEl.querySelector('.fixture-enable');
+            if (!checkbox || !checkbox.checked) {
+                return;
+            }
+            fixtureEl.querySelectorAll('input[type="range"]').forEach(slider => {
+                const channel = parseInt(slider.getAttribute('data-channel'), 10);
+                channelMap[channel] = parseInt(slider.value, 10);
+            });
+        });
+        return channelMap;
+    }
+
+    function renderFixtureControls(channelMap = {}, allEnabled = false) {
         fixtureControls.innerHTML = '';
         
         if (fixtures.length === 0) {
@@ -148,8 +194,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const fixtureEnableCheckbox = document.createElement('input');
             fixtureEnableCheckbox.type = 'checkbox';
             fixtureEnableCheckbox.className = 'fixture-enable';
-            fixtureEnableCheckbox.checked = editingSceneName ? 
-                (enabledFixtures.includes(fixture.name)) : true; // Default enabled for new scenes
+            fixtureEnableCheckbox.checked = allEnabled
+                ? true // New scenes start with every fixture participating
+                : isFixtureInMap(fixture, channelMap);
             fixtureEnableCheckbox.setAttribute('data-fixture-name', fixture.name);
             
             fixtureEnableLabel.appendChild(fixtureEnableCheckbox);
@@ -181,10 +228,14 @@ document.addEventListener('DOMContentLoaded', function() {
             channelsContainer.style.opacity = fixtureEnableCheckbox.checked ? '1' : '0.5';
             
             for (let i = 0; i < fixture.channel_count; i++) {
-                const channelIndex = fixture.start_channel + i - 1; // 0-based index
-                const channelValue = channelValues[channelIndex] || 0;
-                
-                const channelEl = createChannelControl(fixture, i, channelIndex, channelValue);
+                const channel = fixture.start_channel + i; // 1-based DMX channel
+                // A stored 0 is a real value, so test for presence rather
+                // than truthiness; absent channels fall back to the type default.
+                const channelValue = Object.prototype.hasOwnProperty.call(channelMap, channel)
+                    ? channelMap[channel]
+                    : channelDefault(fixture, i);
+
+                const channelEl = createChannelControl(fixture, i, channel, channelValue);
                 channelsContainer.appendChild(channelEl);
             }
             
@@ -193,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    function createChannelControl(fixture, channelOffset, dmxIndex, value = 0) {
+    function createChannelControl(fixture, channelOffset, channel, value = 0) {
         // Get channel type information
         const channelContainer = document.createElement('div');
         channelContainer.className = 'channel-control';
@@ -228,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Label
         const channelLabel = document.createElement('label');
         channelLabel.textContent = channelName;
-        channelLabel.setAttribute('for', `channel-${dmxIndex}`);
+        channelLabel.setAttribute('for', `channel-${channel}`);
         
         // Range input
         const channelInput = document.createElement('input');
@@ -236,8 +287,8 @@ document.addEventListener('DOMContentLoaded', function() {
         channelInput.min = 0;
         channelInput.max = 255;
         channelInput.value = value;
-        channelInput.id = `channel-${dmxIndex}`;
-        channelInput.setAttribute('data-dmx-index', dmxIndex);
+        channelInput.id = `channel-${channel}`;
+        channelInput.setAttribute('data-channel', channel);
          
         // Value display
         const valueDisplay = document.createElement('span');
@@ -284,35 +335,10 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        // Collect channel values from form
-        const channels = [];
-        const sliders = fixtureControls.querySelectorAll('input[type="range"]');
-        
-        // Initialize all channels to 0
-        for (let i = 0; i < 512; i++) {
-            channels[i] = 0;
-        }
-        
-        // Set channel values from sliders
-        sliders.forEach(slider => {
-            const dmxIndex = parseInt(slider.getAttribute('data-dmx-index'));
-            channels[dmxIndex] = parseInt(slider.value);
-        });
-        
-        // Get enabled fixtures
-        const enabledFixtures = [];
-        const fixtureCheckboxes = fixtureControls.querySelectorAll('.fixture-enable');
-        fixtureCheckboxes.forEach(checkbox => {
-            if (checkbox.checked) {
-                enabledFixtures.push(checkbox.getAttribute('data-fixture-name'));
-            }
-        });
-        
         // Create scene data
         const sceneData = {
             name: sceneName,
-            channels: channels,
-            enabledFixtures: enabledFixtures
+            channels: collectChannelMap()
         };
         
         // Send to server
@@ -391,52 +417,14 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     function testScene() {
-        // Collect channel values from form
-        const channels = [];
-        
-        // Initialize all channels to 0
-        for (let i = 0; i < 512; i++) {
-            channels[i] = 0;
-        }
-        
-        // Get enabled fixtures
-        const enabledFixtureNames = [];
-        const fixtureCheckboxes = fixtureControls.querySelectorAll('.fixture-enable');
-        fixtureCheckboxes.forEach(checkbox => {
-            if (checkbox.checked) {
-                enabledFixtureNames.push(checkbox.getAttribute('data-fixture-name'));
-            }
-        });
-        
-        // Set channel values from sliders, but only for enabled fixtures
-        fixtures.forEach(fixture => {
-            // Skip disabled fixtures
-            if (!enabledFixtureNames.includes(fixture.name)) {
-                return;
-            }
-            
-            // Find the fixture's channel sliders
-            const fixtureEl = Array.from(fixtureControls.querySelectorAll('.fixture-control')).find(el => 
-                el.querySelector('h4').textContent.startsWith(fixture.name)
-            );
-            
-            if (fixtureEl) {
-                const sliders = fixtureEl.querySelectorAll('input[type="range"]');
-                sliders.forEach(slider => {
-                    const dmxIndex = parseInt(slider.getAttribute('data-dmx-index'));
-                    channels[dmxIndex] = parseInt(slider.value);
-                });
-            }
-        });
-        
-        // Test scene
+        // Preview exactly what would be saved: the same enabled-fixture map.
         fetch('/setup/api/config/scenes/test', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                channels: channels
+                channels: collectChannelMap()
             })
         })
         .then(response => response.json())
@@ -464,10 +452,10 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Calculate the corresponding DMX channel in the linked fixture
-            const linkedChannelIndex = fixture.start_channel + channelOffset - 1; // 0-based index
+            const linkedChannel = fixture.start_channel + channelOffset; // 1-based
             
             // Find the corresponding slider for this channel
-            const linkedSlider = fixtureControls.querySelector(`input[data-dmx-index="${linkedChannelIndex}"]`);
+            const linkedSlider = fixtureControls.querySelector(`input[data-channel="${linkedChannel}"]`);
             if (linkedSlider) {
                 linkedSlider.value = value;
                 // Update the value display

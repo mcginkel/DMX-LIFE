@@ -19,23 +19,41 @@ def get_json_object():
     return data
 
 
-def find_invalid_channel(channels):
+def parse_channel_map(channels):
     """
-    Check that channels is a list of integers in 0-255.
+    Validate a scene's channel map and normalise its keys to ints.
 
-    Returns None if valid, otherwise a message naming the problem. Booleans are
-    rejected explicitly because bool is a subclass of int in Python.
+    Accepts a mapping of channel number (1-512) to value (0-255). JSON
+    object keys always arrive as strings, so this is the boundary where they
+    become ints - everything downstream compares int channel numbers and
+    must never meet a string one.
+
+    Returns (channel_map, None) when valid, otherwise (None, message).
+    Booleans are rejected explicitly, for keys and values alike, because
+    bool is a subclass of int in Python.
     """
-    if not isinstance(channels, list):
-        return 'Channels must be a list'
+    if not isinstance(channels, dict):
+        return None, 'Channels must be an object mapping channel number to value'
 
-    for index, value in enumerate(channels):
+    parsed = {}
+    for key, value in channels.items():
+        if isinstance(key, bool) or not isinstance(key, (str, int)):
+            return None, f'Channel number {key!r} is not an integer'
+        try:
+            channel = int(key)
+        except ValueError:
+            return None, f'Channel number {key!r} is not an integer'
+
+        if not 1 <= channel <= 512:
+            return None, f'Channel number {channel} is out of range (1-512)'
         if isinstance(value, bool) or not isinstance(value, int):
-            return f'Channel {index + 1} is not an integer'
+            return None, f'Channel {channel} is not an integer'
         if not 0 <= value <= 255:
-            return f'Channel {index + 1} is out of range (0-255)'
+            return None, f'Channel {channel} is out of range (0-255)'
 
-    return None
+        parsed[channel] = value
+
+    return parsed, None
 
 
 def find_invalid_fixtures(fixtures):
@@ -194,15 +212,13 @@ def save_scene_endpoint():
     if not data.get('name') or 'channels' not in data:
         return jsonify({'success': False, 'message': 'Scene name and channels required'}), 400
 
-    invalid = find_invalid_channel(data['channels'])
+    channel_map, invalid = parse_channel_map(data['channels'])
     if invalid:
         return jsonify({'success': False, 'message': invalid}), 400
 
-    # Get enabled fixtures (optional)
-    enabled_fixtures = data.get('enabledFixtures', None)
     group = data.get('group', None)
 
-    success = save_scene(data['name'], data['channels'], enabled_fixtures, group)
+    success = save_scene(data['name'], channel_map, group)
     if success:
         return jsonify({'success': True})
     
@@ -245,11 +261,11 @@ def test_scene_endpoint():
     if 'channels' not in data:
         return jsonify({'success': False, 'message': 'Channels required'}), 400
 
-    invalid = find_invalid_channel(data['channels'])
+    channel_map, invalid = parse_channel_map(data['channels'])
     if invalid:
         return jsonify({'success': False, 'message': invalid}), 400
 
-    success = test_scene(data['channels'])
+    success = test_scene(channel_map)
     if success:
         return jsonify({'success': True})
 
