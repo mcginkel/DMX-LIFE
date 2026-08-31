@@ -5,6 +5,7 @@ from flask import current_app
 from app.config_manager import ConfigManager
 from app.scene_manager import SceneManager
 from app.dmx_controller_class import DMXController
+from app.dmx_backends import create_backend
 
 # Global instances
 config_manager = None
@@ -40,16 +41,8 @@ def init_dmx_controller(app):
     # Load scenes
     scene_manager.load_scenes()
 
-    # Get network settings
-    network_settings = config_manager.get_network_settings()
-
-    # Initialize DMX controller
-    dmx_controller = DMXController(
-        network_settings['artnet_ip'],
-        network_settings['universe'],
-        network_settings['packet_size'],
-        network_settings['refresh_rate']
-    )
+    # Build the configured output backend and hand it to the controller
+    dmx_controller = DMXController(create_backend(config_manager.read()))
 
 
     # Register application lifecycle hooks
@@ -193,16 +186,10 @@ def save_config(config_data):
         if not updated_config:
             return False
         
-        # If network settings changed, reconfigure DMX controller
-        network_keys = {'artnet_ip', 'universe', 'packet_size', 'refresh_rate'}
-        if network_keys & config_data.keys():
-            network_settings = config_manager.get_network_settings()
-            dmx_controller.reconfigure(
-                artnet_ip=network_settings['artnet_ip'],
-                universe=network_settings['universe'],
-                packet_size=network_settings['packet_size'],
-                refresh_rate=network_settings['refresh_rate']
-            )
+        # If output settings changed, rebuild the backend. 'output' covers
+        # both a settings change and a switch to a different backend.
+        if 'output' in config_data.keys():
+            dmx_controller.reconfigure(updated_config)
         
         # If scenes changed, reload
         if 'scenes' in config_data:
@@ -230,15 +217,9 @@ def load_configuration():
     
     try:
         scene_manager.load_scenes()
-        
-        # Reconfigure DMX controller
-        network_settings = config_manager.get_network_settings()
-        dmx_controller.reconfigure(
-            artnet_ip=network_settings['artnet_ip'],
-            universe=network_settings['universe'],
-            packet_size=network_settings['packet_size'],
-            refresh_rate=network_settings['refresh_rate']
-        )
+
+        # Reconfigure DMX output from the reloaded configuration
+        dmx_controller.reconfigure(config_manager.read())
         
         return True
     except Exception as e:

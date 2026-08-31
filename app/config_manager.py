@@ -1,11 +1,19 @@
 """
 Config Manager - Handles all configuration file I/O operations
 """
+import copy
 import datetime
 import json
 import os
 import shutil
 from flask import current_app
+
+from app.dmx_backends.factory import BACKEND_ARTNET, DEFAULT_OUTPUT
+
+# Top-level keys that predate the `output` section, moved into output.artnet
+# on read. `refresh_rate` is deliberately not among them - its fate is a
+# separate open question (see the change's task 8.1), so it stays put.
+LEGACY_OUTPUT_KEYS = ('artnet_ip', 'artnet_port', 'universe', 'packet_size')
 
 
 class ConfigManager:
@@ -19,10 +27,7 @@ class ConfigManager:
         """Create default configuration file if it doesn't exist"""
         if not os.path.exists(self.config_file):
             default_config = {
-                'artnet_ip': '255.255.255.255',  # Broadcast by default
-                'artnet_port': 6454,
-                'universe': 0,
-                'packet_size': 512,
+                'output': copy.deepcopy(DEFAULT_OUTPUT),
                 'refresh_rate': 30,  # FPS
                 'fixtures': [],
                 'scenes': []
@@ -34,6 +39,7 @@ class ConfigManager:
         try:
             with open(self.config_file, 'r') as f:
                 config = json.load(f)
+            self._migrate_output_settings(config)
             self._migrate_fixture_links(config.get('fixtures', []))
             self._migrate_scene_channels(
                 config.get('scenes', []), config.get('fixtures', [])
@@ -128,6 +134,52 @@ class ConfigManager:
             if current_app:
                 current_app.logger.error(f"Error writing configuration: {e}")
             raise
+
+    def _migrate_output_settings(self, config):
+        """
+        Move legacy top-level Art-Net keys into an `output` section, in place.
+
+        Output used to be Art-Net and nothing else, so its settings sat at the
+        top level of the config. With a backend to choose, those settings
+        become one backend's settings among others and move under
+        `output.artnet`, with `output.backend` recording the choice.
+
+        A config already carrying an `output` section is left exactly as it
+        is, so this is safe on every read. Both backends' settings sub-objects
+        are present from the start, so choosing a different backend in the UI
+        does not discard the settings of the one being switched away from.
+        """
+        if isinstance(config.get('output'), dict):
+            return  # already migrated
+
+        legacy = {key: config[key] for key in LEGACY_OUTPUT_KEYS if key in config}
+        defaults = DEFAULT_OUTPUT['artnet']
+
+        if not legacy:
+            # Neither shape present (an unusually sparse config): fall back to
+            # defaults rather than leaving no output configuration at all.
+            config['output'] = copy.deepcopy(DEFAULT_OUTPUT)
+            return
+
+        config['output'] = {
+            'backend': BACKEND_ARTNET,
+            'artnet': {
+                'ip': config.pop('artnet_ip', defaults['ip']),
+                'port': config.pop('artnet_port', defaults['port']),
+                'universe': config.pop('universe', defaults['universe']),
+                'packet_size': config.pop('packet_size', defaults['packet_size']),
+            },
+            'enttec_usb': copy.deepcopy(DEFAULT_OUTPUT['enttec_usb']),
+        }
+
+        if current_app:
+            moved = ', '.join(f"{k}={v!r}" for k, v in legacy.items())
+            current_app.logger.warning(
+                "Migrated Art-Net settings into the output section:\n"
+                f"  before (top level): {moved}\n"
+                f"  after  (output.artnet): {config['output']['artnet']}\n"
+                f"  output.backend: {BACKEND_ARTNET}"
+            )
 
     def _migrate_scene_channels(self, scenes, fixtures):
         """
@@ -310,30 +362,48 @@ class ConfigManager:
                 current_app.logger.error(f"Error updating configuration: {e}")
             return None
     
+    def get_output_settings(self):
+        """The whole output section: which backend is active and every
+        backend's own settings."""
+        return self.read().get('output', copy.deepcopy(DEFAULT_OUTPUT))
+
     def get_network_settings(self):
-        """Get network-related settings"""
+        """
+        Art-Net settings in the flat shape the Network Setup page uses.
+
+        Kept flat for the UI's benefit; the stored shape is nested under
+        `output.artnet`.
+        """
         config = self.read()
+        output = config.get('output', {})
+        artnet = output.get('artnet', {})
+        defaults = DEFAULT_OUTPUT['artnet']
         return {
-            'artnet_ip': config.get('artnet_ip', '255.255.255.255'),
-            'artnet_port': config.get('artnet_port', 6454),
-            'universe': config.get('universe', 0),
-            'packet_size': config.get('packet_size', 512),
+            'backend': output.get('backend', BACKEND_ARTNET),
+            'artnet_ip': artnet.get('ip', defaults['ip']),
+            'artnet_port': artnet.get('port', defaults['port']),
+            'universe': artnet.get('universe', defaults['universe']),
+            'packet_size': artnet.get('packet_size', defaults['packet_size']),
+            'enttec_port': (output.get('enttec_usb') or {}).get('port', ''),
             'refresh_rate': config.get('refresh_rate', 30)
         }
     
-    def update_network_settings(self, artnet_ip=None, artnet_port=None, 
+    def update_network_settings(self, artnet_ip=None, artnet_port=None,
                                universe=None, refresh_rate=None):
-        """Update network settings"""
-        updates = {}
-        if artnet_ip is not None:
-            updates['artnet_ip'] = artnet_ip
-        if artnet_port is not None:
-            updates['artnet_port'] = artnet_port
-        if universe is not None:
-            updates['universe'] = universe
+        """Update the Art-Net backend's settings, written to output.artnet."""
+        config = self.read()
+        output = config.get('output', copy.deepcopy(DEFAULT_OUTPUT))
+        artnet = output.setdefault('artnet', copy.deepcopy(DEFAULT_OUTPUT['artnet']))
+
+        for key, value in (('ip', artnet_ip), ('port', artnet_port),
+                           ('universe', universe)):
+            if value is not None:
+                artnet[key] = value
+
+        updates = {'output': output}
         if refresh_rate is not None:
             updates['refresh_rate'] = refresh_rate
-        
+
         return self.update(**updates)
     
     def get_fixtures(self):

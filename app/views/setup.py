@@ -4,6 +4,9 @@ Setup views for DMX configuration
 from flask import Blueprint, render_template, jsonify, request, current_app
 from app import auth
 from app.views.main import GROUP_ORDER
+from app.dmx_backends.factory import (
+    BACKEND_ARTNET, BACKEND_ENTTEC_USB, DEFAULT_OUTPUT, SUPPORTED_BACKENDS,
+)
 from app.dmx_controller import get_config, save_config, save_scene, delete_scene, test_scene
 from app.models.fixture import FixtureType
 
@@ -119,9 +122,15 @@ def index():
 @setup_bp.route('/network')
 @auth.login_required
 def network():
-    """Art-Net network settings"""
+    """Output backend and its connection settings"""
     config = get_config()
-    return render_template('setup/network.html', config=config)
+    output = config.get('output') or DEFAULT_OUTPUT
+    return render_template(
+        'setup/network.html',
+        config=config,
+        output=output,
+        backends=sorted(SUPPORTED_BACKENDS.items()),
+    )
 
 @setup_bp.route('/fixtures')
 @auth.login_required
@@ -151,41 +160,86 @@ def get_config_endpoint():
     config['MAX_SCENES'] = current_app.config['MAX_SCENES']
     return jsonify(config)
 
+def _parse_bounded_int(raw, label, minimum, maximum):
+    """Returns (value, None) or (None, message)."""
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return None, f'{label} must be a number'
+    if not minimum <= value <= maximum:
+        return None, f'{label} must be between {minimum} and {maximum}'
+    return value, None
+
+
 @setup_bp.route('/api/config/network', methods=['POST'])
 @auth.login_required
 def update_network_config():
-    """Update Art-Net network settings"""
+    """
+    Update the output backend selection and the backends' settings.
+
+    Each backend's settings are validated on their own terms - Art-Net's are
+    numeric, the USB backend's is a device path - and only the backend being
+    made active has to be fully configured. Settings for the other backend
+    are still stored, so switching away and back does not lose them.
+
+    Nothing is saved unless everything validates, so a bad value cannot leave
+    the configuration half-updated.
+    """
     data = get_json_object()
     if data is None:
         return jsonify({'success': False, 'message': 'JSON body required'}), 400
 
-    artnet_ip = data.get('artnet_ip', '255.255.255.255')
-    if not isinstance(artnet_ip, str) or not artnet_ip.strip():
-        return jsonify({'success': False, 'message': 'Art-Net IP address is required'}), 400
+    backend = data.get('backend', BACKEND_ARTNET)
+    if backend not in SUPPORTED_BACKENDS:
+        known = ', '.join(sorted(SUPPORTED_BACKENDS))
+        return jsonify({
+            'success': False,
+            'message': f"Unknown output backend '{backend}'. Choose one of: {known}"
+        }), 400
 
-    # Parse the numeric settings defensively; nothing is saved unless all of
-    # them are valid, so a bad value cannot leave configuration half-updated.
-    numeric_settings = {
-        'artnet_port': (data.get('artnet_port', 6454), 1, 65535),
-        'universe': (data.get('universe', 0), 0, 32767),
-        'refresh_rate': (data.get('refresh_rate', 30), 1, 60),
-    }
+    # Start from what is stored so an unsupplied field keeps its value.
+    stored_output = (get_config() or {}).get('output') or {}
+    artnet = dict(DEFAULT_OUTPUT['artnet'], **(stored_output.get('artnet') or {}))
+    enttec = dict(DEFAULT_OUTPUT['enttec_usb'], **(stored_output.get('enttec_usb') or {}))
 
-    network_config = {'artnet_ip': artnet_ip.strip()}
-    for key, (raw, minimum, maximum) in numeric_settings.items():
-        try:
-            value = int(raw)
-        except (TypeError, ValueError):
-            return jsonify({'success': False, 'message': f'{key} must be a number'}), 400
-        if not minimum <= value <= maximum:
-            return jsonify({
-                'success': False,
-                'message': f'{key} must be between {minimum} and {maximum}'
-            }), 400
-        network_config[key] = value
+    # -- Art-Net settings ------------------------------------------------
+    supplied_artnet = data.get('artnet') or {}
+    if 'ip' in supplied_artnet or backend == BACKEND_ARTNET:
+        ip = supplied_artnet.get('ip', artnet['ip'])
+        if not isinstance(ip, str) or not ip.strip():
+            return jsonify({'success': False, 'message': 'Art-Net IP address is required'}), 400
+        artnet['ip'] = ip.strip()
 
-    success = save_config(network_config)
-    if success:
+    for key, label, low, high in (('port', 'Art-Net port', 1, 65535),
+                                  ('universe', 'Universe', 0, 32767)):
+        if key in supplied_artnet:
+            value, error = _parse_bounded_int(supplied_artnet[key], label, low, high)
+            if error:
+                return jsonify({'success': False, 'message': error}), 400
+            artnet[key] = value
+
+    # -- Enttec USB settings ---------------------------------------------
+    supplied_enttec = data.get('enttec_usb') or {}
+    if 'port' in supplied_enttec:
+        device = supplied_enttec['port']
+        if not isinstance(device, str):
+            return jsonify({'success': False, 'message': 'Serial port must be text'}), 400
+        enttec['port'] = device.strip()
+    if backend == BACKEND_ENTTEC_USB and not enttec['port']:
+        return jsonify({
+            'success': False,
+            'message': 'A serial port is required to use the Enttec DMX USB Pro'
+        }), 400
+
+    updates = {'output': {'backend': backend, 'artnet': artnet, 'enttec_usb': enttec}}
+
+    if 'refresh_rate' in data:
+        value, error = _parse_bounded_int(data['refresh_rate'], 'refresh_rate', 1, 60)
+        if error:
+            return jsonify({'success': False, 'message': error}), 400
+        updates['refresh_rate'] = value
+
+    if save_config(updates):
         return jsonify({'success': True})
     return jsonify({'success': False, 'message': 'Failed to save network settings'}), 500
 

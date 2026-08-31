@@ -3,40 +3,40 @@ DMX Controller - Handles DMX hardware communication and smooth transitions
 """
 import time
 import threading
-import socket
 from flask import current_app
-from stupidArtnet import StupidArtnet
+
+from app.dmx_backends import create_backend
+from app.dmx_backends.base import DMXBackendError
 
 
 class DMXController:
-    """Manages DMX hardware output via Art-Net with smooth transitions"""
+    """Manages DMX hardware output with smooth transitions.
+
+    Output goes through a DMXBackend, so which physical transport carries
+    the frame is a configuration choice. Nothing below - the lock, the
+    output thread, the crossfade - varies by backend.
+    """
     
     TRANSITION_DURATION = 3.0  # Transition duration in seconds
     UPDATE_RATE = 0.033  # ~30fps update rate
     
-    def __init__(self, artnet_ip, universe, packet_size, refresh_rate):
+    def __init__(self, backend):
         """
         Initialize DMX controller
-        
+
         Args:
-            artnet_ip: IP address for Art-Net output
-            universe: DMX universe number
-            packet_size: Number of DMX channels (typically 512)
-            refresh_rate: FPS for DMX output
+            backend: a DMXBackend the composed frames are transmitted through
         """
-        self.artnet = StupidArtnet(artnet_ip, universe, packet_size, refresh_rate)
-        self.artnet.set_simplified(False)
-        self.artnet.set_net(0)
-        self.artnet.set_subnet(0)
+        self.backend = backend
         
         # DMX value buffers. Every transmitted frame must correspond to
         # exactly one scene composition, never a mixture of two - _lock
         # guards current_values, target_values and transition_active/
         # transition_start_time together, so a reader can never observe new
         # values with a stale transition flag or vice versa. It covers
-        # buffer access only, never the socket send: _send_dmx_packet takes
+        # buffer access only, never the backend send: _send_dmx_packet takes
         # its frame as an argument and must not read self.current_values,
-        # or a slow/unreachable Art-Net node would stall every writer.
+        # or a slow/unreachable backend would stall every writer.
         self._lock = threading.Lock()
         self.current_values = bytearray(512)
         self.target_values = bytearray(512)
@@ -58,51 +58,35 @@ class DMXController:
     
     def _send_dmx_packet(self, buffer):
         """
-        Send DMX packet with connection status tracking
-        
+        Transmit one frame through the active backend, tracking connection
+        status. Only state transitions are logged, not every failed frame.
+
         Args:
-            buffer: bytearray(512) with DMX values
+            buffer: 512 bytes of DMX values
         """
-        packet = bytearray()
-        packet.extend(self.artnet.packet_header)
-        packet.extend(buffer)
-        
         try:
-            self.artnet.socket_client.sendto(packet, (self.artnet.target_ip, self.artnet.port))
-            
-            # Send artsync if enabled (suppress errors)
-            if self.artnet.if_sync:
-                try:
-                    self.artnet.make_artsync_header()
-                    self.artnet.socket_client.sendto(
-                        self.artnet.artsync_header, 
-                        (self.artnet.target_ip, self.artnet.port)
-                    )
-                except socket.error:
-                    pass  # Silently ignore artsync errors
-            
+            self.backend.send(buffer)
+
             # Update connection status on successful send
             if not self.connection_status['connected']:
                 self.connection_status['connected'] = True
                 self.connection_status['error_message'] = None
                 if current_app:
-                    current_app.logger.info("Art-Net connection restored")
-                    
-        except socket.error as error:
+                    current_app.logger.info("DMX output connection restored")
+
+        except DMXBackendError as error:
             current_time = time.time()
-            
+
             # Update connection status
             was_connected = self.connection_status['connected']
             self.connection_status['connected'] = False
             self.connection_status['last_error_time'] = current_time
             self.connection_status['error_message'] = str(error)
-            
+
             # Only log once when connection is first lost (not repeatedly)
             if was_connected:
                 if current_app:
-                    current_app.logger.warning(f"Art-Net connection lost: {error}")
-        finally:
-            self.artnet.sequence = (self.artnet.sequence + 1) % 256
+                    current_app.logger.warning(f"DMX output connection lost: {error}")
     
     def start(self):
         """Start the DMX output thread"""
@@ -110,8 +94,18 @@ class DMXController:
             return
         
         self._running = True
-        # Note: We don't call self.artnet.start() because it starts its own thread
-        # and calls show() which prints errors. We manage our own thread instead.
+
+        # Opening the transport must not stop the thread from starting: an
+        # unreachable backend has to surface as a connection status the
+        # operator can see, with output resuming if it becomes reachable.
+        try:
+            self.backend.connect()
+        except DMXBackendError as error:
+            self.connection_status['connected'] = False
+            self.connection_status['last_error_time'] = time.time()
+            self.connection_status['error_message'] = str(error)
+            if current_app:
+                current_app.logger.warning(f"DMX output connection failed: {error}")
         
         self._thread = threading.Thread(target=self._run, daemon=True)
         self._thread.start()
@@ -125,10 +119,10 @@ class DMXController:
             return
         
         self._running = False
-        # Note: We don't call self.artnet.stop() because we manage our own thread
-        
+
         self._thread.join(timeout=2.0)
         self._thread = None
+        self.backend.disconnect()
         
         if current_app:
             current_app.logger.info("DMX controller thread stopped")
@@ -221,40 +215,30 @@ class DMXController:
         """Get connection status (for monitoring)"""
         return self.connection_status.copy()
     
-    def reconfigure(self, artnet_ip=None, universe=None, packet_size=None, refresh_rate=None):
+    def reconfigure(self, config):
         """
-        Reconfigure the Art-Net connection
-        
+        Rebuild the output backend from configuration and swap it in.
+
+        This covers both a settings change and a change of which backend is
+        active - the factory may return a different class entirely, not just
+        the same one with new settings. The stop/restart sequencing is
+        unchanged; only what is constructed in between differs.
+
         Args:
-            artnet_ip: New IP address (optional)
-            universe: New universe (optional)
-            packet_size: New packet size (optional)
-            refresh_rate: New refresh rate (optional)
+            config: the full configuration, containing the `output` section
         """
         # Stop current instance
         was_running = self._running
         if was_running:
             self.stop()
-        
-        # Get current settings if not provided
-        if artnet_ip is None:
-            artnet_ip = self.artnet.target_ip
-        if universe is None:
-            universe = self.artnet.universe
-        if packet_size is None:
-            packet_size = self.artnet.packet_size
-        if refresh_rate is None:
-            refresh_rate = self.artnet.fps
-        
-        # Reinitialize Art-Net
-        self.artnet = StupidArtnet(artnet_ip, universe, packet_size, refresh_rate)
-        self.artnet.set_simplified(False)
-        self.artnet.set_net(0)
-        self.artnet.set_subnet(0)
-        
+        else:
+            self.backend.disconnect()
+
+        self.backend = create_backend(config)
+
         # Restart if it was running
         if was_running:
             self.start()
-        
+
         if current_app:
-            current_app.logger.info(f"DMX controller reconfigured: {artnet_ip}, universe {universe}")
+            current_app.logger.info(f"DMX output reconfigured: {self.backend.describe()}")

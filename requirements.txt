@@ -1,4 +1,4 @@
 flask==3.1.2
 flask-httpauth==4.8.0
-stupidartnet==1.6.0
+pyserial==3.5
 pillow==11.3.0
