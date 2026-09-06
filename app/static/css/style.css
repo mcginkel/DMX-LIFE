@@ -768,7 +768,7 @@ footer {
     padding-bottom: 5px;
 }
 
-.dmx-monitor-grid .dmx-channel {
+.dmx-monitor-grid .dmx-monitor-channel {
     display: flex;
     flex-direction: column;
     border: 1px solid var(--border-color);
@@ -778,7 +778,7 @@ footer {
     font-size: 0.7rem;
 }
 
-.dmx-monitor-grid .dmx-channel.active {
+.dmx-monitor-grid .dmx-monitor-channel.active {
     background-color: var(--accent-wash);
     border-color: var(--primary-color);
 }
@@ -832,7 +832,7 @@ footer {
 }
 
 @media (min-width: 768px) and (max-width: 991px) {
-    .dmx-channel {
+    .dmx-monitor-channel {
         padding: 2px;
     }
     
