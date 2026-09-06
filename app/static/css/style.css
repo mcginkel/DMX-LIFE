@@ -228,16 +228,21 @@ footer {
     padding-top: 10px;
 }
 
-.scene-button-extra.active {
+/* Matched on both classes, not just .scene-button-extra, so this outranks
+   .scene-button.active rather than merely coming after it. At equal
+   specificity the generic active rule won on source order alone and the
+   Extra group's own colour never appeared - the same shape as the
+   kill-scene rules, which already carry the extra specificity. */
+.scene-button.scene-button-extra.active {
     border-color: var(--warning-color);
     background-color: var(--warning-color);
 }
 
-.scene-button-extra.active .scene-name {
+.scene-button.scene-button-extra.active .scene-name {
     color: var(--on-warning);
 }
 
-.scene-button-extra.active::before {
+.scene-button.scene-button-extra.active::before {
     background-color: var(--on-warning);
 }
 
