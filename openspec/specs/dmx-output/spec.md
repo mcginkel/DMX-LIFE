@@ -12,7 +12,7 @@ previewing, and how connectivity to the Art-Net node is tracked.
 
 The system SHALL transmit the current 512-channel frame continuously at
 approximately 30 frames per second from a single background thread, whether or
-not the values have changed.
+not the values have changed, regardless of which output backend is active.
 
 #### Scenario: Output continues while idle
 
@@ -26,9 +26,11 @@ not the values have changed.
 
 #### Scenario: Output survives an unreachable node
 
-- **WHEN** the Art-Net node cannot be reached
+- **WHEN** the active backend cannot be reached (an unreachable Art-Net node,
+  a disconnected USB interface, or equivalent for the active backend)
 - **THEN** the output thread continues running
-- **AND** transmission resumes automatically once the node is reachable again
+- **AND** transmission resumes automatically once the backend is reachable
+  again
 
 ### Requirement: Crossfade on scene change
 
@@ -71,13 +73,14 @@ frame without fading, for previewing a scene while editing it.
 
 ### Requirement: Connection status tracking
 
-The system SHALL track whether Art-Net frames are being transmitted
-successfully, expose that status, and log only transitions between the connected
-and disconnected states rather than logging every failed frame.
+The system SHALL track whether frames are being transmitted successfully
+through the active backend, expose that status, and log only transitions
+between the connected and disconnected states rather than logging every
+failed frame.
 
 #### Scenario: Loss of connectivity is recorded once
 
-- **WHEN** transmission begins failing
+- **WHEN** transmission through the active backend begins failing
 - **THEN** the status becomes disconnected with the error recorded
 - **AND** a single warning is logged rather than one per frame
 
@@ -89,13 +92,21 @@ and disconnected states rather than logging every failed frame.
 
 ### Requirement: Runtime network reconfiguration
 
-The system SHALL apply changed Art-Net settings without requiring a process
-restart, stopping and restarting the output thread as needed.
+The system SHALL apply changed output settings - including switching which
+backend is active - without requiring a process restart, stopping and
+restarting the output thread as needed.
 
 #### Scenario: Applying new settings
 
-- **WHEN** the Art-Net address, universe, packet size or refresh rate is changed
+- **WHEN** the active backend's settings are changed
 - **THEN** subsequent frames are transmitted using the new settings
+- **AND** output resumes without restarting the application
+
+#### Scenario: Switching backend takes effect immediately
+
+- **WHEN** the operator switches the active backend
+- **THEN** subsequent frames are transmitted through the newly selected
+  backend
 - **AND** output resumes without restarting the application
 
 ### Requirement: Frame composition atomicity
@@ -121,15 +132,15 @@ previous composition and a newly applied one.
 
 ### Requirement: Output thread is not blocked by transmission
 
-The system SHALL NOT hold buffer synchronisation while transmitting to the
-network, so that a slow or unreachable Art-Net node cannot delay scene
+The system SHALL NOT hold buffer synchronisation while transmitting through
+the active backend, so that a slow or unreachable backend cannot delay scene
 activation.
 
 #### Scenario: Unreachable node does not stall the interface
 
-- **WHEN** the Art-Net node is unreachable and transmission is slow to fail
-- **THEN** scene activation requests continue to be handled without waiting for
-  transmission to complete
+- **WHEN** the active backend is unreachable and transmission is slow to fail
+- **THEN** scene activation requests continue to be handled without waiting
+  for transmission to complete
 
 ### Requirement: Frame integrity
 

@@ -69,8 +69,9 @@
 
 ## 7. Verify
 
-- [ ] 7.1 Existing Art-Net setup: activate a scene, confirm output reaches
-      the real venue rig exactly as before this change.
+- [x] 7.1 Existing Art-Net setup: activate a scene, confirm output reaches
+      the real venue rig exactly as before this change. Confirmed on location
+      2026-09-06: full functional test against the real rig, all correct.
 - [x] 7.2 An old-shape `config.json` (flat `artnet_ip` etc.) loads correctly
       and migrates; a fresh default config still starts successfully.
 - [x] 7.3 Switching backend in Network Setup takes effect without an app
