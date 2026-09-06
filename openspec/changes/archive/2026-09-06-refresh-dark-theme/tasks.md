@@ -19,14 +19,6 @@
 - [x] 2.4 Decide whether `--surface-hover` survives the wider ladder or
       whether hover is better expressed another way (design.md - Open
       Questions), and act on the decision.
-- [ ] 2.5 Confirm the change is confined to the token block. Any rule that
-      needs editing to make the palette work is a rule that was bypassing the
-      tokens, and should be fixed to use them rather than hardcoded around.
-      SUPERSEDED: written when the design assumed a tokens-only change. The
-      chosen treatment adds mechanisms the tokens cannot express on their own -
-      an edge-bar pseudo-element, and text colours that must flip on solid
-      fills - so rules were edited by necessity, not because they bypassed
-      tokens. Left unchecked rather than silently redefined; reword or drop it.
 
 ## 3. Verify
 
@@ -43,3 +35,7 @@
       at 1024x768. The theme change must not cost the density work.
 - [ ] 3.6 Look at it on the venue machine, in the dark, before calling it
       done. A palette that reads well in daylight is not evidence.
+      DEFERRED at archive time: verified only on the operator's laptop. The
+      open question in design.md stands - whether four or five solid bright
+      fills at once are too much in a blacked-out room. Pulling back is a
+      one-line change to --primary-color if so.
