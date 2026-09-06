@@ -1,8 +1,4 @@
 {
-    "artnet_ip": "10.10.11.10",
-    "artnet_port": 6454,
-    "universe": 1,
-    "packet_size": 512,
     "refresh_rate": 30,
     "fixtures": [
         {
@@ -1020,11 +1016,11 @@
         {
             "name": "sf1",
             "channels": {
-                "123": 94,
-                "124": 48,
+                "123": 45,
+                "124": 25,
                 "125": 0,
-                "126": 94,
-                "127": 48,
+                "126": 45,
+                "127": 25,
                 "128": 0
             },
             "group": "sfeer"
@@ -1064,5 +1060,17 @@
             },
             "group": "extra"
         }
-    ]
+    ],
+    "output": {
+        "backend": "artnet",
+        "artnet": {
+            "ip": "10.10.11.10",
+            "port": 6454,
+            "universe": 1,
+            "packet_size": 512
+        },
+        "enttec_usb": {
+            "port": ""
+        }
+    }
 }
