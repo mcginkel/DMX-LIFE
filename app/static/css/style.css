@@ -5,37 +5,50 @@
    There is no light theme; these tokens are the only palette. */
 :root {
     color-scheme: dark;
-    accent-color: #ff9d2e;
+    accent-color: #ffb245;
 
-    --primary-color: #ff9d2e;
-    --secondary-color: #e08420;
+    --primary-color: #ffb245;
+    --secondary-color: #e89a2c;
     --success-color: #7cb342;
     --danger-color: #d64933;
     --warning-color: #ffc857;
 
-    /* Surfaces, darkest to lightest */
-    --chrome-color: #060504;
-    --bg-color: #0b0a08;
-    --surface-color: #14120e;
-    --surface-raised: #1a1610;
-    --surface-hover: #221d15;
+    /* Surfaces, darkest to lightest. The steps are deliberately wide: at the
+       previous spacing a card and the page behind it differed by a few units
+       and the whole interface read as one flat field. */
+    --chrome-color: #08080a;
+    --bg-color: #0e0e11;
+    --surface-color: #17171b;
+    --surface-raised: #23232a;
+    --surface-hover: #2c2c34;
 
-    --border-color: #332d22;
-    --border-strong: #4a4132;
+    --border-color: #3b3b45;
+    --border-strong: #4f4f5b;
 
-    /* Text */
-    --text-color: #d8cfbe;
-    --text-muted: #8a7f6a;
-    --text-on-accent: #1a1207;
+    /* Text. The greys carry a slight cool cast so the warm signals read as
+       warm; the cast is confined to structure and never used for state. */
+    --text-color: #c8c8d0;
+    --text-muted: #8b8f96;
+    --text-on-accent: #231600;
 
-    /* Accent washes for active/selected states */
-    --accent-wash: rgba(255, 157, 46, 0.16);
-    --accent-wash-strong: rgba(255, 157, 46, 0.28);
+    /* State signals. Every one differs from its idle counterpart in
+       lightness as well as hue, and the active states additionally carry an
+       edge bar, so state survives with colour removed entirely. */
+    --accent-wash: rgba(255, 178, 69, 0.16);
+    --accent-wash-strong: rgba(255, 178, 69, 0.28);
+    --accent-edge: #231600;
     --warning-wash: rgba(255, 200, 87, 0.14);
+    --on-warning: #241a00;
+
     --danger-wash: rgba(214, 73, 51, 0.20);
     --danger-wash-soft: rgba(214, 73, 51, 0.07);
     --danger-border: rgba(214, 73, 51, 0.55);
     --danger-text: #ff9c86;
+    --on-danger: #fff2ee;
+
+    /* Off scenes sit below the idle surface rather than beside it, so "off"
+       reads as recessed before any colour is considered. */
+    --surface-recessed: #131318;
 
     --shadow-soft: 0 2px 10px rgba(0, 0, 0, 0.5);
     --shadow-lift: 0 4px 14px rgba(0, 0, 0, 0.6);
@@ -125,9 +138,15 @@ nav ul li a.active {
     box-shadow: 0 0 4px var(--success-color);
 }
 
+/* Disconnected is a triangle, not a differently coloured dot: the shape
+   carries the meaning on its own, so the indicator does not rely on telling
+   two small colours apart at a glance. clip-path also clips box-shadow, so
+   the glow is dropped here rather than rendered as a clipped smear. */
 .status-indicator.disconnected {
     background-color: var(--danger-color);
-    box-shadow: 0 0 4px var(--danger-color);
+    border-radius: 0;
+    clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+    box-shadow: none;
     animation: pulse-fast 1s infinite;
 }
 
@@ -211,7 +230,15 @@ footer {
 
 .scene-button-extra.active {
     border-color: var(--warning-color);
-    background-color: var(--warning-wash);
+    background-color: var(--warning-color);
+}
+
+.scene-button-extra.active .scene-name {
+    color: var(--on-warning);
+}
+
+.scene-button-extra.active::before {
+    background-color: var(--on-warning);
 }
 
 .scene-grid {
@@ -240,9 +267,26 @@ footer {
     box-shadow: var(--shadow-lift);
 }
 
+/* Active states are marked three ways at once - a solid bright fill, a much
+   larger lightness step than the idle surface, and a solid edge bar - so the
+   state does not depend on distinguishing one hue from another. */
 .scene-button.active {
     border-color: var(--primary-color);
-    background-color: var(--accent-wash);
+    background-color: var(--primary-color);
+}
+
+.scene-button.active .scene-name {
+    color: var(--text-on-accent);
+}
+
+.scene-button.active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    background-color: var(--accent-edge);
 }
 
 /* Kill scenes (Main Uit, Achtergrond Uit, Sfeer Uit, Alles Uit) read red,
@@ -250,7 +294,7 @@ footer {
    alone, so a new "... Uit" scene needs no CSS change. */
 .scene-button[data-scene$="Uit" i] {
     border-color: var(--danger-border);
-    background-color: var(--danger-wash-soft);
+    background-color: var(--surface-recessed);
 }
 
 .scene-button[data-scene$="Uit" i] .scene-name {
@@ -261,7 +305,15 @@ footer {
    scenes: the state worth seeing is "these lights are off". */
 .scene-button[data-scene$="Uit" i].active {
     border-color: var(--danger-color);
-    background-color: var(--danger-wash);
+    background-color: var(--danger-color);
+}
+
+.scene-button[data-scene$="Uit" i].active .scene-name {
+    color: var(--on-danger);
+}
+
+.scene-button[data-scene$="Uit" i].active::before {
+    background-color: var(--on-danger);
 }
 
 .scene-name {
