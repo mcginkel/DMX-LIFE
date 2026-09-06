@@ -11,6 +11,10 @@ against. The reasoning behind the design lives in [`docs/adr/`](../docs/adr/).
   `proposal.md` (why), `specs/` deltas (what changes), sometimes a `design.md`
   (how), and `tasks.md` (the steps).
 - **`changes/archive/`** — completed changes, filed after implementation.
+- **`nice-to-have/`** — ideas captured as changes but not planned work. Kept
+  outside `changes/` so that everything in there means "we intend to build
+  this". See [its README](nice-to-have/README.md) for what is parked and how to
+  promote one back.
 
 A change's spec files are *deltas* — `## ADDED` / `## MODIFIED` / `## REMOVED`
 sections — that get merged into `specs/` once the work lands.
@@ -31,17 +35,28 @@ sections — that get merged into `specs/` once the work lands.
 
 ## Open changes
 
-Proposals, none implemented. Roughly in priority order:
+Proposals, none implemented. `kind` says what sort of work it is, `when` says
+how committed it is - `next` is ordered, `soon` is intended but unscheduled.
 
-| Change | Why it matters |
-|---|---|
-| [add-pluggable-dmx-backends](changes/add-pluggable-dmx-backends/proposal.md) | Replaces StupidArtnet with our own Art-Net sender behind a `DMXBackend` interface, plus an Enttec DMX USB Pro backend — DMX output becomes configurable per installation instead of Art-Net-only |
-| [add-test-suite](changes/add-test-suite/proposal.md) | Nothing is tested automatically |
+| Change | Kind | When | Why it matters |
+|---|---|---|---|
+| [separate-operator-data](changes/separate-operator-data/proposal.md) | capability | next | Operator data lives in the repo working tree, so `git checkout` deployment and saving a scene are in each other's way. Precondition for backup, sync and multi-show. Fully specced, ready to implement |
+| [per-channel-participation](changes/per-channel-participation/proposal.md) | bug | next | Opening `extraLampSpreker` in the editor and saving it silently widens it from 5 claimed channels to 26. A working scene can be destroyed with no warning |
+| [migrate-scenes-on-repatch](changes/migrate-scenes-on-repatch/proposal.md) | capability | soon | Scenes address the rig by DMX channel, so moving a fixture silently points them at the wrong lamps. Same failure ADR-0010 fixed for fixture links, one level up |
+| [scene-editor-ergonomics](changes/scene-editor-ergonomics/proposal.md) | polish | soon | The editor lists scenes in storage order, ignoring the grouping the main page uses, and a new scene does not preview until a control is touched |
+| [propagate-scene-state](changes/propagate-scene-state/proposal.md) | capability | soon | Two browsers controlling the rig show different pictures of what is live until one is reloaded |
+| [refresh-dark-theme](changes/refresh-dark-theme/proposal.md) | polish | soon | The dark theme is flat: the surface ladder is too compressed and it is effectively monochrome |
+| [fixture-library-as-data](changes/fixture-library-as-data/proposal.md) | capability | soon | Fixture types are hardcoded in Python, so adding a lamp means editing source. The largest barrier to anyone else using this |
+| [add-test-suite](changes/add-test-suite/proposal.md) | capability | soon | Nothing is tested automatically. Note two of its tasks target composition rules that `compact-scene-storage` removed, and its crossfade tests need a clock seam that does not exist |
+
+Parked in [`nice-to-have/`](nice-to-have/README.md): `add-pi-native-dmx-backend`,
+`sync-show-data-via-git`, `per-scene-files`.
 
 ## Completed
 
 | Change | Landed |
 |---|---|
+| [add-pluggable-dmx-backends](changes/archive/2026-09-01-add-pluggable-dmx-backends/proposal.md) | 2026-09-01 — DMX output goes through a `DMXBackend` interface; StupidArtnet removed, Art-Net re-implemented byte-identically and verified against a pre-change capture, Enttec DMX USB Pro backend added. Archived at 24/28: the remaining tasks need an Enttec Pro that is no longer being bought, and rig access to confirm output. New `dmx-hardware-backends` capability |
 | [compact-scene-storage](changes/archive/2026-08-30-compact-scene-storage/proposal.md) | 2026-08-30 — scenes store a sparse `{channel: value}` map instead of a 512-entry array; `enabledFixtures` retired (ADR-0007) with its two composition rules collapsed into one, and the editor's per-fixture selection now derived from which channels a scene claims. config.json 186→27 KB; 1217 layer combinations verified byte-identical to the old composition |
 | [add-daily-config-backup](changes/archive/2026-08-20-add-daily-config-backup/proposal.md) | 2026-08-20 — `ConfigManager.write()` now snapshots config.json to `backups/config-<date>.json` before the first write of each day; every day's snapshot is kept forever, no restore functionality |
 | [add-version-display](changes/archive/2026-08-20-add-version-display/proposal.md) | 2026-08-20 — a hand-edited `VERSION` file is read at startup and shown in the footer of every page; falls back to "unknown" if missing; PyInstaller build check left for the next real release |
