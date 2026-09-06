@@ -135,13 +135,36 @@ document.addEventListener('DOMContentLoaded', function() {
         return channels;
     }
 
-    // A fixture participates in a scene if its channels appear in the map.
-    // Inclusion always writes a fixture's whole range, so testing any one
-    // of its channels is equivalent to testing all of them.
-    function isFixtureInMap(fixture, channelMap) {
-        return fixtureChannels(fixture).some(
-            channel => Object.prototype.hasOwnProperty.call(channelMap, channel)
-        );
+    // Whether a scene claims a channel is now tracked per row. A claimed
+    // channel is written to the map on save - including one holding zero,
+    // which is how the "Uit" scenes force fixtures dark. An unclaimed
+    // channel is absent from the map entirely and is left to other layers.
+    function isChannelClaimed(row) {
+        return row.classList.contains('claimed');
+    }
+
+    // An unclaimed channel shows no value rather than 0: a deliberate zero
+    // and an unclaimed channel mean different things, and showing 0 for both
+    // would hide exactly the distinction this is here to make.
+    function setChannelClaimed(row, claimed) {
+        row.classList.toggle('claimed', claimed);
+        const slider = row.querySelector('input[type="range"]');
+        const display = row.querySelector('.value');
+        if (slider && display) {
+            display.textContent = claimed ? slider.value : '\u2013';
+        }
+    }
+
+    // The fixture control is a summary of its channels: all, none, or some.
+    // "Some" is reported but cannot be selected directly - it arises from
+    // claiming individual rows.
+    function updateFixtureSummary(fixtureEl) {
+        const rows = [...fixtureEl.querySelectorAll('.channel-control')];
+        const claimed = rows.filter(isChannelClaimed).length;
+        const checkbox = fixtureEl.querySelector('.fixture-enable');
+        if (!checkbox) return;
+        checkbox.checked = rows.length > 0 && claimed === rows.length;
+        checkbox.indeterminate = claimed > 0 && claimed < rows.length;
     }
 
     // The fixture type's declared default for one of its channels, used for
@@ -154,21 +177,17 @@ document.addEventListener('DOMContentLoaded', function() {
             : 0;
     }
 
-    // Build the scene payload: every channel of every *enabled* fixture,
-    // including ones sitting at 0, and nothing from the disabled ones.
-    // Presence in the map is what claims a channel, so a deliberate zero
-    // has to be written explicitly.
+    // The payload is exactly the claimed channels with their current values,
+    // including zeros. No widening to whole fixtures: a scene that claims
+    // five channels claims five after a round trip, because the editor has
+    // no opinion about the channels it was not asked to touch.
     function collectChannelMap() {
         const channelMap = {};
-        fixtureControls.querySelectorAll('.fixture-control').forEach(fixtureEl => {
-            const checkbox = fixtureEl.querySelector('.fixture-enable');
-            if (!checkbox || !checkbox.checked) {
-                return;
-            }
-            fixtureEl.querySelectorAll('input[type="range"]').forEach(slider => {
-                const channel = parseInt(slider.getAttribute('data-channel'), 10);
-                channelMap[channel] = parseInt(slider.value, 10);
-            });
+        fixtureControls.querySelectorAll('.channel-control.claimed').forEach(row => {
+            const slider = row.querySelector('input[type="range"]');
+            if (!slider) return;
+            const channel = parseInt(slider.getAttribute('data-channel'), 10);
+            channelMap[channel] = parseInt(slider.value, 10);
         });
         return channelMap;
     }
@@ -196,9 +215,6 @@ document.addEventListener('DOMContentLoaded', function() {
             const fixtureEnableCheckbox = document.createElement('input');
             fixtureEnableCheckbox.type = 'checkbox';
             fixtureEnableCheckbox.className = 'fixture-enable';
-            fixtureEnableCheckbox.checked = allEnabled
-                ? true // New scenes start with every fixture participating
-                : isFixtureInMap(fixture, channelMap);
             fixtureEnableCheckbox.setAttribute('data-fixture-name', fixture.name);
             
             fixtureEnableLabel.appendChild(fixtureEnableCheckbox);
@@ -220,28 +236,46 @@ document.addEventListener('DOMContentLoaded', function() {
             const channelsContainer = document.createElement('div');
             channelsContainer.className = 'channel-controls';
             
-            // Toggle channel controls visibility based on enable state
+            // Selecting or releasing a whole fixture stays one action - which
+            // is how every existing scene is authored.
             fixtureEnableCheckbox.addEventListener('change', function() {
-                channelsContainer.style.opacity = this.checked ? '1' : '0.5';
+                channelsContainer.querySelectorAll('.channel-control').forEach(row => {
+                    setChannelClaimed(row, this.checked);
+                });
+                updateFixtureSummary(fixtureEl);
                 testScene(); // Update preview
             });
-            
-            // Set initial state
-            channelsContainer.style.opacity = fixtureEnableCheckbox.checked ? '1' : '0.5';
-            
+
             for (let i = 0; i < fixture.channel_count; i++) {
                 const channel = fixture.start_channel + i; // 1-based DMX channel
                 // A stored 0 is a real value, so test for presence rather
                 // than truthiness; absent channels fall back to the type default.
-                const channelValue = Object.prototype.hasOwnProperty.call(channelMap, channel)
+                const isClaimed = allEnabled
+                    ? true // New scenes start with every channel claimed
+                    : Object.prototype.hasOwnProperty.call(channelMap, channel);
+                const channelValue = isClaimed && Object.prototype.hasOwnProperty.call(channelMap, channel)
                     ? channelMap[channel]
                     : channelDefault(fixture, i);
 
                 const channelEl = createChannelControl(fixture, i, channel, channelValue);
+                setChannelClaimed(channelEl, isClaimed);
+
+                // Clicking the row claims or releases the channel. The slider
+                // owns its own clicks and drags: adjusting a value must never
+                // be read as a change of participation.
+                channelEl.addEventListener('click', function(event) {
+                    if (event.target.closest('input[type="range"]')) return;
+                    if (channelEl.dataset.sliderDrag === 'true') return;
+                    setChannelClaimed(channelEl, !isChannelClaimed(channelEl));
+                    updateFixtureSummary(fixtureEl);
+                    testScene();
+                });
+
                 channelsContainer.appendChild(channelEl);
             }
-            
+
             fixtureEl.appendChild(channelsContainer);
+            updateFixtureSummary(fixtureEl);
             fixtureControls.appendChild(fixtureEl);
         });
     }
@@ -297,13 +331,31 @@ document.addEventListener('DOMContentLoaded', function() {
         valueDisplay.className = 'value';
         valueDisplay.textContent = value;
         
-        // Update value display when slider changes
+        // A drag that starts on the slider can end anywhere, and the click
+        // that follows fires on a common ancestor - which would be read as a
+        // claim toggle. Mark the row for the duration so the row's own
+        // handler ignores it.
+        channelInput.addEventListener('pointerdown', function() {
+            channelContainer.dataset.sliderDrag = 'true';
+        });
+        window.addEventListener('pointerup', function() {
+            if (channelContainer.dataset.sliderDrag === 'true') {
+                // Cleared after the click has been dispatched and ignored.
+                setTimeout(() => { delete channelContainer.dataset.sliderDrag; }, 0);
+            }
+        });
+
+        // Update value display when slider changes. An unclaimed channel
+        // keeps showing no value - its slider position is remembered for if
+        // it is claimed later, but the scene does not carry it.
         channelInput.addEventListener('input', function() {
-            valueDisplay.textContent = this.value;
-            
+            if (channelContainer.classList.contains('claimed')) {
+                valueDisplay.textContent = this.value;
+            }
+
             // Copy value to linked fixtures
             copyValueToLinkedFixtures(fixture, channelOffset, this.value);
-            
+
             testScene();
         });
         
@@ -463,9 +515,12 @@ document.addEventListener('DOMContentLoaded', function() {
             const linkedSlider = fixtureControls.querySelector(`input[data-channel="${linkedChannel}"]`);
             if (linkedSlider) {
                 linkedSlider.value = value;
-                // Update the value display
+                // Update the value display, unless that channel is unclaimed -
+                // it must keep reading as "no value", not as a number the
+                // scene does not actually carry.
+                const linkedRow = linkedSlider.closest('.channel-control');
                 const valueDisplay = linkedSlider.parentNode.querySelector('.value');
-                if (valueDisplay) {
+                if (valueDisplay && linkedRow && linkedRow.classList.contains('claimed')) {
                     valueDisplay.textContent = value;
                 }
             }

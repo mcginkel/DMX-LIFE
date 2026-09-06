@@ -635,10 +635,43 @@ footer {
     border-bottom: none;
 }
 
+/* A scene claims individual channels, not whole fixtures. A claimed row is
+   at full strength with a lit bar; an unclaimed one is dimmed with an unlit
+   bar - a lightness difference plus a marker, so the state does not rest on
+   telling two colours apart. Clicking the row toggles it. */
 .channel-control {
     display: flex;
     align-items: center;
     margin-bottom: 10px;
+    position: relative;
+    padding-left: 12px;
+    cursor: pointer;
+    opacity: 0.42;
+    transition: opacity 0.15s;
+}
+
+.channel-control::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 2px;
+    bottom: 2px;
+    width: 3px;
+    border-radius: 2px;
+    background-color: var(--surface-hover);
+}
+
+.channel-control.claimed {
+    opacity: 1;
+}
+
+.channel-control.claimed::before {
+    background-color: var(--primary-color);
+}
+
+/* The slider keeps its own cursor: dragging a value is not a claim. */
+.channel-control input[type="range"] {
+    cursor: pointer;
 }
 
 .channel-control label {
