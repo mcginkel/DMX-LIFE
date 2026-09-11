@@ -43,7 +43,6 @@ how committed it is - `next` is ordered, `soon` is intended but unscheduled.
 | [separate-operator-data](changes/separate-operator-data/proposal.md) | capability | next | Operator data lives in the repo working tree, so `git checkout` deployment and saving a scene are in each other's way. Precondition for backup, sync and multi-show. Fully specced, ready to implement |
 | [migrate-scenes-on-repatch](changes/migrate-scenes-on-repatch/proposal.md) | capability | soon | Scenes address the rig by DMX channel, so moving a fixture silently points them at the wrong lamps. Same failure ADR-0010 fixed for fixture links, one level up |
 | [scene-editor-ergonomics](changes/scene-editor-ergonomics/proposal.md) | polish | soon | The editor lists scenes in storage order, ignoring the grouping the main page uses, and a new scene does not preview until a control is touched |
-| [fixture-library-as-data](changes/fixture-library-as-data/proposal.md) | capability | soon | Fixture types are hardcoded in Python, so adding a lamp means editing source. The largest barrier to anyone else using this |
 | [add-test-suite](changes/add-test-suite/proposal.md) | capability | soon | Nothing is tested automatically. Note two of its tasks target composition rules that `compact-scene-storage` removed, and its crossfade tests need a clock seam that does not exist |
 
 Parked in [`nice-to-have/`](nice-to-have/README.md): `add-pi-native-dmx-backend`,
